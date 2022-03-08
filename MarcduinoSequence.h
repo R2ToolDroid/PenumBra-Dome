@@ -11,7 +11,7 @@ MARCDUINO_ACTION(ScreamSequence, :SE01, ({
     CommandEvent::process("LE10003");
     PSI_COM.print("0T5\r");
     CommandEvent::process("MP20005");
-    
+    DEBUG_PRINTLN("ready..SE01"); 
     //Marcduino::send(F("$S"));
     //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllOpenClose, ALL_DOME_PANELS_MASK);
 }))
