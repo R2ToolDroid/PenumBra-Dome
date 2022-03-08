@@ -38,7 +38,7 @@
  Right Analog2   A1
   
  */
-
+#include <JC_Button.h>          // https://github.com/JChristensen/JC_Button
 #include "ReelTwo.h"
 #include "core/Animation.h"
 #include "core/DelayCall.h"
@@ -54,8 +54,9 @@
 #define COMMAND_SERIAL Serial //   Serial1 for LIVE 
 
 #define PSI_COM Serial3 //  serial for PSI Pro
-#define DOME_BTN_L A0
-#define DOME_BTN_R A1
+
+//#define DOME_BTN_L A0
+//#define DOME_BTN_R A1
  
 
 #define HOLO_HSERVO        0x1000
@@ -128,9 +129,9 @@ void resetSequence()
  
 void setup()
 {
-    pinMode(DOME_BTN_L, INPUT_PULLUP);
-    pinMode(DOME_BTN_R, INPUT_PULLUP);
-    
+     BtnL.begin();              // initialize the button object
+     BtnR.begin();              // initialize the button object
+   
     REELTWO_READY();
     Wire.begin();
     //Wire.setClock(400000); //Set i2c frequency to 400 kHz.
