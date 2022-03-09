@@ -195,13 +195,26 @@ void MakeCommand(int row, int col){
                 case 14:
                 CommandEvent::process("MP140005");
                 break;
-
-
-
-                 
-                }
+              }
             
           }
+
+          if (row == 2) {
+                  //Logics 
+                  switch (col){
+
+                    case 0:
+                    CommandEvent::process("LE84115\n");
+                    break;
+
+
+                    
+                  }
+
+            
+          }
+
+          
 
           
      

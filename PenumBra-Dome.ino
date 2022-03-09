@@ -1,4 +1,4 @@
-//#define USE_DEBUG 
+#define USE_DEBUG 
 //#define DEBUG_SERIAL
 //#define USE_SERVO_DEBUG
 //#define USE_HOLO_DEBUG
@@ -27,6 +27,7 @@
  --- Dome Button --
  Left  Analog1   A0
  Right Analog2   A1
+
   
  */
 
@@ -42,7 +43,7 @@
 #include "dome/Logics.h"   //HACK to switch PINs to different Position  FRONT 29 REAR 28 
 #include "dome/MagicPanel.h"   /// PIN 8 DATA | PIN 7 CLK | PIN 6 CS
 
-#define COMMAND_SERIAL Serial //   Serial1 for LIVE 
+#define COMMAND_SERIAL Serial1 //   Serial1 for LIVE 
 
 #define PSI_COM Serial3 //  serial for PSI Pro
 #define DOME_BTN_L A0
@@ -147,7 +148,7 @@ void setup()
 
 
     FLD.selectScrollTextLeft("R2\n    D2", LogicEngineRenderer::kBlue, 1, 15);
-    RLD.selectScrollTextLeft("... RSeries LogicEngine ....", LogicEngineRenderer::kYellow, 0, 15);
+    RLD.selectScrollTextLeft("... RSeries Doc Snyder ....", LogicEngineRenderer::kYellow, 0, 15);
 
     //CommandEvent::process(F("HPF104"));  
     //servoDispatch.moveTo(0, 150, 1000, 1.0);  
@@ -198,6 +199,110 @@ Mode 19 - Light Saber Battle
 Mode 20 - Star Wars Intro (scrolling yellow "text" getting smaller and dimmer)
 Mode 21 - VU Meter (4 seconds)
 Mode 92 - VU Meter -Runs Indefinitely (Spectrum on Teeces)
+
+The RSeries use a command input string to tell it what effects combination should be run. This is comprised of a 8 digit long int.
+
+TLEECSNN
+T - the text message designator - if not provided defaults 0 (first message)
+
+0 - Astromech
+1 - Astromech
+2 - Excuse me sir, but that R2-D2 is in prime condition, a real bargain.
+3 - That malfunctioning little twerp.
+4 - The city's central computer told me.
+5 - Beep
+6 - Beep-bee-bee-boop-bee-doo-weep
+7 - R2-D2
+8 - Beep Boop
+9 - Bite my shiny metal ... Beep ... Boop ...
+L - the logic designator - if not provided, defaults to 0 (all)
+
+0 - All
+1 - Front
+2 - Rear
+EE - the effect - use two digits if logic designator provided
+
+00 - Normal
+01 - Alarm - flips between color and red with mic effects
+02 - Failure - cycles colors and brightness fading - roughly timed to 128 screa-3.mp3
+03 - Leia - pale green with mic effects
+04 - March - sequence timed to Imperial March
+05 - Single Color - single hue shown
+06 - Flashing Color - single hue on and off
+07 - Flip Flop Color - boards flip back and forth - similar to march
+08 - Flip Flop Alt - other direction of flips on back board, front is same to flip flop
+09 - Color Swap - switches between color specified and inverse compliment color
+10 - Rainbow - rotates through colors over time
+11 - Red Alert - shows color specified based on mic input
+12 - Mic Bright - brightness of color specified back on mic input
+13 - Mic Rainbow - color goes from default specified through color range based on mic input
+14 - Lights Out - turns off displays
+15 - Static Text
+16 - Text Scrolling Left
+17 - Text Scrolling Right
+18 - Text Scrolling Up
+19 - Roaming Pixel (pixel roams from top left to bottom right - for testing)
+20 - Horizontal Scanline
+21 - Vertical Scanline
+22 - Fire
+99 - Select Random Effect
+00 - Reset to Normal
+C - color designator
+
+1 - Red
+2 - Orange
+3 - Yellow
+4 - Green
+5 - Cyan (Aqua)
+6 - Blue
+7 - Purple
+8 - Magenta
+9 - Pink
+0 - Default color on alarm / default to red on many effects / color cycle on march / ignored on failure and rainbow
+S - speed or sensitivity (1-9 scale) with 5 generally considered default for speed
+
+Flip Flop and Rainbow - 200ms x speed
+Flash - 250ms x speed
+March - 150ms x speed
+Color Swap - 350ms x speed
+Red Alert - sets mic sensitivity - as a fraction of speed / 10 - we recommend 3
+Mic Bright - sets minimum brightness - fraction of speed / 10
+NN - 2 digit time length in seconds
+
+00 for continuous use on most
+00 for default length on Leia
+Not used on March or Failure
+Some sequence examples:
+
+Note: Leading 0s drop off as these are long ints
+Solid Red: 51000
+Solid Orange: 52000
+Solid Yellow: 53000
+Solid Green: 54000
+Solid Cyan: 55000
+Solid Blue: 56000
+Solid Purple: 57000
+Solid Magenta: 58000
+Solid Pink: 59000
+Alarm (default): 10500
+Failure: 20000
+Leia: 30000
+March: 40500
+March (Red Only): 41500
+Flash (Yellow): 63500
+Color Swap (pink): 99500
+Rainbow: 100500
+Red Alert: 111300
+Mic Bright (Green): 124200
+Mic Rainbow (Cyan): 135000
+Fire: 220000
+Text Scroll Left (Cyan): 40165118 (message #4 "The city's central computer told me." for 18 seconds)
+
+54008 - solid green for 8 seconds
+63315 - flashing yellow at slightly higher speed for 15 seconds
+30008 - leia effect for only 8 seconds 
+
+
 */
 
 

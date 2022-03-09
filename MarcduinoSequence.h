@@ -10,8 +10,9 @@ MARCDUINO_ACTION(StopSequence, :SE00, ({
 MARCDUINO_ACTION(ScreamSequence, :SE01, ({
     CommandEvent::process("LE10003");
     PSI_COM.print("0T5\r");
-    CommandEvent::process("MP20005");
+    //CommandEvent::process("MP20005");
     DEBUG_PRINTLN("ready..SE01"); 
+    CommandEvent::process("MP40005");
     //Marcduino::send(F("$S"));
     //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllOpenClose, ALL_DOME_PANELS_MASK);
 }))
@@ -21,6 +22,7 @@ MARCDUINO_ACTION(ScreamSequence, :SE01, ({
 
 MARCDUINO_ACTION(WaveSequence, :SE02, ({
       PSI_COM.print("0T15\r");  ///Heard
+      CommandEvent::process("MP70005");
     //Marcduino::send(F("$213"));
     //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelWave, ALL_DOME_PANELS_MASK);
 }))
@@ -29,6 +31,7 @@ MARCDUINO_ACTION(WaveSequence, :SE02, ({
 
 MARCDUINO_ACTION(SmirkWaveSequence, :SE03, ({
       PSI_COM.print("0T2\r");
+      CommandEvent::process("MP30005");
     //Marcduino::send(F("$34"));
     //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelWaveFast, ALL_DOME_PANELS_MASK);
 }))
