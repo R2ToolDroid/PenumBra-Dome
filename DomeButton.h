@@ -204,7 +204,7 @@ void MakeCommand(int row, int col){
                   switch (col){
 
                     case 0:
-                    CommandEvent::process("LE84115\n");
+                    CommandEvent::process("LE84115");
                     break;
 
 

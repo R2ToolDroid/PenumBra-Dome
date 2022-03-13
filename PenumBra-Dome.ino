@@ -98,16 +98,14 @@ LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault, 2);
 
 void resetSequence()
 {
-   // Marcduino::send(F("$s"));
+   
     CommandEvent::process(F( 
-        "LE000000|0\n"
-        "FSOFF\n"
-        "BMOFF\n"
-        "HPA000|0\n"
-        "CB00000\n"
-        "DP00000\n"));
-
-      //CommandEvent::process(F("HPA000|0"));
+        "LE000000|0\n"  //Logic Off
+        "HPA000|0\n"    // HP Off
+        "MP00000"));    /// Magic off
+        
+    PSI_COM.print("0T1\r");   //PSI off
+      
 }
 
 
@@ -160,22 +158,27 @@ void setup()
     //PSI_COM.print("0T2\r");
 
 
-/*  Magic Panel Commands:
-kNormal   
-kSolid  
-kToggle   
-kFlash  
-kAlert  
-kHorizontalScan   
-kVerticalScan   
-kLife   
-kExpandSolid  
-kCollapseSolid  
-kExpandHollow   
-kCollapseHollow   
-kForwardQ   
-kReverseQ 
+/*    
+ *     #### Magic Panel Commands:
+ *   
+0   kNormal   
+1   kSolid  
+2   kToggle   
+3   kFlash  
+4   kAlert  
+5   kHorizontalScan   
+6   kVerticalScan   
+7   kLife   
+8   kExpandSolid  
+9   kCollapseSolid  
+10  kExpandHollow   
+11  kCollapseHollow   
+12  kForwardQ   
+13  kReverseQ 
+
 #### PSI PRO Commands : ###
+ Sample PSI_COM.print("0T19\r")  // Light Saber Battle
+
 Mode 0 - Turn Panel off (This will also turn stop the Teeces if they share the serial connection and the "0" address is used)
 Mode 1 - Default (Swipe) The default mode can be changed on the config.h tab
 Mode 2 - Flash (fast flash) (4 seconds) Use caution around those sensitive to flashing lights.
@@ -302,6 +305,79 @@ Text Scroll Left (Cyan): 40165118 (message #4 "The city's central computer told 
 63315 - flashing yellow at slightly higher speed for 15 seconds
 30008 - leia effect for only 8 seconds 
 
+
+
+### Holo Commands ###
+## - the Sequence Value including leading zero if necessary, ie sequence 3 is 03
+
+C - (Optional), the Color integer value from list below:
+    Basic Color Integer Values
+        1 = Red
+        2 = Yellow
+        3 = Green
+        4 = Cyan (Aqua)
+        5 = Blue
+        6 = Magenta
+        7 = Orange
+        8 = Purple
+        9 = White
+        0 = Random
+
+S - (Optional), Speed setting integer for the Dim Pulse LED function below (0-9)
+
+R - (Optional), Random State for clearing LED displays
+    Random State Integer Values
+        1 = Use Default Sequences
+        2 = Use Random Sequences
+
+P - (Optional), the Position integer value from list below:
+    Preset Position Integer Values
+        0 = Down
+        1 = Center
+        2 = Up
+        3 = Left
+        4 = Upper Left
+        5 = Lower Left
+        6 = Right
+        7 = Upper Right
+        8 = Lower Right
+
+D001    - Leia Sequence, Random shades of blue to mimic Leia Hologram
+D002C   - Color Projector Sequence, Like Leia above but using color command value
+D003CS  - Dim Pulse Sequence, Color slowly pulses on and off
+D004C   - Cycle Sequence, using color command value
+D005C   - Toggles Color, Simply sets LEDs tp solid color value
+D006    - Rainbow Sequence
+D007C   - Short Circuit, Led flashes on and off with interval slowing over time
+D096    - Clears LED, Disables Auto LED Sequence & "Off Color"
+D0971   - Clears LED, Enables Auto LED Sequence,Enables Default Sequences, Disables "Off Color"
+D0972   - Clears LED, Enables Auto LED Sequence,Enables Random Sequences, Disables "Off Color"
+D098    - Clears LED, Disables Auto LED Sequence, enables "Off Color"
+D0991   - Clears LED, Enables Auto LED Sequence,Enables Default Sequences, Enables "Off Color"
+D0992   - Clears LED, Enables Auto LED Sequence,Enables Random Sequences, Enables "Off Color"
+
+D101P   - Sends HP to a Preset Position
+D102    - Enables RC Control on HP (Left/Right)
+D103    - Enables RC Control on HP (Up/Down)
+D104    - Sends HP to a Random Position
+D105    - Wags HP Left/Right 5 times
+D106    - Wags HP Up/Down 5 times
+D198    - Disables Auto HP Twitch
+D199    - Enables Auto HP Twitch
+
+  S1    - Leia Mode (Front HP in Down Position, Leia LED Sequence, all other HPs disabled)*
+  S2    - Play R2 Cartoon [OLED]
+  S3    - Play Deathstar Plans movie [OLED]
+  S4    - Clear all LEDs, Disable Auto HP Twitch, Disable Auto LED Sequence, Disables Off Color
+  S5    - Clear all LEDs, Enable Auto HP Twitch, Enable Auto LED Sequence (w/ default seqs.),
+          Disables Off
+  S9    - Clear all LEDs, Enable Auto HP Twitch, Enable Auto LED Sequence (w/ random seqs.),
+          Disables Off Color
+  S7    - Clear all LEDs, Disable Auto HP Twitch, Disable Auto LED Sequence, Enables Off Color
+  S8    - Clear all LEDs, Enable Auto HP Twitch, Enable Auto LED Sequence (w/ default seqs.),
+          Enables Off Color
+  S9    - Clear all LEDs, Enable Auto HP Twitch, Enable Auto LED Sequence (w/ random seqs.),
+          Enables Off Color
 
 */
 

@@ -66,7 +66,10 @@ MARCDUINO_ACTION(HoloCen, 7, ({
     CommandEvent::process(F("HPF106|5"));  // Wag left Right  106 top down
 }))
 
-
+MARCDUINO_ACTION(AllHoloOn, *ON00, ({
+    // Front Holo Dim cycle random color
+    CommandEvent::process(F("HPA0040"));
+}))
 
 MARCDUINO_ACTION(FrontHoloOn, *ON01, ({
     // Front Holo Dim cycle random color
@@ -74,6 +77,12 @@ MARCDUINO_ACTION(FrontHoloOn, *ON01, ({
 }))
 
 ////////////////
+
+MARCDUINO_ACTION(AllHoloOff, *OF00, ({
+    // Front Holo Off
+    CommandEvent::process(F("HPA0000"));
+}))
+
 
 MARCDUINO_ACTION(FrontHoloOff, *OF01, ({
     // Front Holo Off
@@ -115,6 +124,12 @@ MARCDUINO_ACTION(ResetAllHolos, *ST00, ({
     CommandEvent::process(F("HPA0000"));
 }))
 
+MARCDUINO_ACTION(AllHoloRandomMove, *RD00, ({
+    // Front Holo Move Random
+    CommandEvent::process(F("HPA199"));
+    
+}))
+
 ////////////////
 
 MARCDUINO_ACTION(FrontHoloRandomMove, *RD01, ({
@@ -140,7 +155,10 @@ MARCDUINO_ACTION(TopHoloRandomMove, *RD03, ({
 
 ////////////////
 
-
+MARCDUINO_ACTION(AllHoloPulse, *HPS300, ({
+    // Front Holo Dim pulse random color
+    CommandEvent::process(F("HPA0030"));
+}))
 
 MARCDUINO_ACTION(FrontHoloPulse, *HPS301, ({
     // Front Holo Dim pulse random color
