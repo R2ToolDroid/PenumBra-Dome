@@ -297,14 +297,299 @@ MARCDUINO_ANIMATION(FullAwakeSequence, :SE11)
     DO_END()
 }
 
+MARCDUINO_ACTION(MidAwakeSequence, :SE13, ({   
+        resetSequence();
+}))
 
 
-////////////////  Weiter mit SE12
+MARCDUINO_ANIMATION(AwakePlusSequence, :SE14)
+{
+    DO_START()
+    DO_COMMAND(F(
+        "MP30005\n"
+        "HPA0040\n"
+        "LE60005\n"
+        "HPA104\n"
+        ))
+    
+    DO_WAIT_SEC(2) 
+    DO_COMMAND(F( 
+      "HPA104\n"
+    ))
+    DO_WAIT_SEC(1) 
+    DO_COMMAND(F( 
+      "HPA104\n" 
+      "HPA006\n"
+    ))
+    DO_WAIT_SEC(2) 
+    DO_COMMAND(F( 
+      "HPA104\n"
+      ))
+    DO_WAIT_SEC(2) 
+    DO_COMMAND(F( 
+      "HPA104\n"
+      ))
+    DO_WAIT_SEC(3) 
+    DO_COMMAND(F( 
+      "HPA104\n"
+      ))
+    DO_WAIT_SEC(2) 
+    DO_COMMAND(F( 
+      "HPA104\n"
+      ))
+      
+    DO_WAIT_SEC(3) 
+    DO_COMMAND(F( 
+      "HPA04\n"
+      
+      ))
+    DO_WAIT_SEC(2) 
+    DO_COMMAND(F(
+       
+      "HPA1011\n"
+      "HPA0000\n"
+      ))
+   
+    DO_END()
+}
+
+MARCDUINO_ANIMATION (ScreamNPSequence, :SE05){
+    DO_START()
+    DO_COMMAND(F( 
+      "HPA0031|5\n" //Puse All Red
+      "HPA1012\n"   // Holos UP
+      "LE10505\n"   //Logic Alarm 5 Sec
+      "MP40005\n"   //Magic Panel Alarm 5 Sec
+    ))
+    DO_ONCE (
+      PSI_COM.print("0T5\r");
+      )
+    DO_END()
+    
+    //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllOpenClose, ALL_DOME_PANELS_MASK);
+}
+
+MARCDUINO_ANIMATION (ScreamNPSSequence, :SE51){
+    DO_START()
+    DO_COMMAND(F( 
+      "HPA0031|5\n" //Puse All Red
+      "HPA1012\n"   // Holos UP
+      "LE10505\n"   //Logic Alarm 5 Sec
+      "MP40005\n"   //Magic Panel Alarm 5 Sec
+    ))
+    DO_ONCE (
+      PSI_COM.print("0T5\r");
+      )
+    DO_END()
+    
+    //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllOpenClose, ALL_DOME_PANELS_MASK);
+}
+
+
+MARCDUINO_ANIMATION (WaveOneSequence, :SE52){
+    DO_START()
+    DO_COMMAND(F( 
+        "LE56000\n"  //Blue
+        "HPA00388\n"    // HP Pink
+        "HPA199\n"      //Move all to RND Position
+        "MP60008"))   /// Magic Flash 5 Sec
+    DO_ONCE (     
+      PSI_COM.print("0T8\r");  ///Sweep
+    )
+    DO_WAIT_SEC (8)
+    DO_RESET({
+        resetSequence();
+    })
+    DO_END()
+}
+
+MARCDUINO_ANIMATION (FastSmirkSequence, :SE53){
+    DO_START()
+    DO_COMMAND(F( 
+        "LE63503\n"     //Flash Back and Front
+        "HPA0043\n"    // HP Yellow
+        "HPA199\n"      //Move all to RND Position
+        "MP30003"))   /// Magic Flash 5 Sec
+
+    DO_ONCE (     
+      PSI_COM.print("0T2\r");  ///Sweep
+    )
+    DO_WAIT_SEC (3)
+    DO_RESET({
+        resetSequence();
+    })
+    DO_END()
+}
+
+MARCDUINO_ANIMATION (WaveTwoSequence, :SE54){
+    DO_START()
+    DO_COMMAND(F( 
+        "LE10505\n"  //Blue
+        "HPA00385\n"    // HP Pink
+        "HPA199\n"      //Move all to RND Position
+        "MP50008"))   /// Magic Flash 5 Sec
+    DO_ONCE (     
+      PSI_COM.print("0T8\r");  ///Sweep
+    )
+    DO_WAIT_SEC (5)
+    DO_RESET({
+        resetSequence();
+    })
+    DO_END()
+}
+
+MARCDUINO_ANIMATION (MarchingAntsSequence, :SE55){
+    DO_START()
+    DO_COMMAND(F( 
+        "LE40505\n"  //Blue
+        "HPA0040\n"    // HP 
+        "HPA199\n"      //Move all to RND Position
+        "MP50008"))   /// Magic Flash 5 Sec
+    DO_ONCE (     
+      PSI_COM.print("0T11\r");  ///Sweep
+    )
+    DO_WAIT_SEC (5)
+    DO_COMMAND(F( 
+        "LE41505\n"  //Blue
+        "HPA00305\n"    // HP 
+        "HPA199\n"      //Move all to RND Position
+        "MP100005"))   /// Magic Flash 5 Sec
+    DO_ONCE (     
+      PSI_COM.print("0T21\r");  ///Sweep
+    )
+
+    DO_WAIT_SEC (5)
+    
+    
+    DO_RESET({
+        resetSequence();
+    })
+    DO_END()
+}
+
+MARCDUINO_ANIMATION(FaintShortSequence, :SE55)
+{
+    DO_START()
+    DO_ONCE({
+     PSI_COM.print("0T4\r"); //Short Circuit
+    })
+    // Logic engine alarm
+    DO_COMMAND_AND_WAIT(F(
+        "LE220000\n"
+        "HPF0059\n"
+        
+        ),2000)
+    // Play scream-3 and wait 500ms
+    // DO_MARCDUINO_AND_WAIT(F("$623"), 500);
+    // Logic engine failure
+    DO_COMMAND(F(
+        // Logic engine failure
+        "LE20000\n"
+        // Holo Short Circuit
+        "HPA007|7\n"
+        //Magic Panel Game of Live
+        "MP70000\7n"
+        // Fire strip spark for 1000ms
+        //"FS11000\n"
+        "HPA1010\n"
+        // Charge Bay Indicator flicker for 6s
+        //"CB20006\n"
+        // Data Panel flicker for 6s
+        //"DP20006\n"
+        // Smoke on
+        //"BMON\n"
+        ))
+    // Wait 3 seconds
+    DO_WAIT_SEC(3)
+    DO_COMMAND(F(
+        // Smoke off
+        "MP80005\n"
+        // Fire strip off
+        "HPA1012\n"))
+    // Wait 3 seconds
+    DO_WAIT_SEC(3)   
+    DO_COMMAND(F(
+        // Charge Bay Indicator disabled for 8s
+        //"CB10008\n"
+        // Data Panel disabled for 8s
+        "MP90005\n"
+        // Holo off
+        "HPA000|0\n"))
+    //DO_SEQUENCE_VARSPEED(SeqPanelAllOpenCloseLong, ALL_DOME_PANELS_MASK, 700, 900);
+    // Fake being dead for 8 seconds
+    DO_WAIT_SEC(8)
+    // Ok We are back!
+    DO_RESET({
+        resetSequence();
+    })
+    DO_END()
+}
+
+
+MARCDUINO_ANIMATION(RhytmicCantinaSequence, :SE57)
+{
+    DO_START()
+    DO_COMMAND(F(
+        "MP50000\n"
+        "HPA0040\n"
+        "LE40500\n"
+        "HPA104\n"
+        ))
+    
+    DO_WAIT_SEC(2) 
+    DO_COMMAND(F( 
+      "HPA104\n"
+    ))
+    DO_WAIT_SEC(1) 
+    DO_COMMAND(F( 
+      "MP60000\n"
+      "HPA104\n" 
+      "HPA006\n"
+      "LE99500\n"
+    ))
+    DO_WAIT_SEC(2) 
+    DO_COMMAND(F( 
+      "HPA104\n"
+      ))
+    DO_WAIT_SEC(2) 
+    DO_COMMAND(F( 
+      "HPA104\n"
+      ))
+    DO_WAIT_SEC(3) 
+    DO_COMMAND(F( 
+      "LE63315\n"
+      "HPA104\n"
+      "MP40000\n"
+      ))
+    DO_WAIT_SEC(2) 
+    DO_COMMAND(F( 
+      "HPA104\n"
+      ))
+      
+    DO_WAIT_SEC(3) 
+    DO_COMMAND(F( 
+      "HPA04\n"
+      
+      ))
+    DO_WAIT_SEC(2) 
+    DO_COMMAND(F(
+       
+      "HPA1011\n"
+      "HPA0000\n"
+      
+      ))
+    DO_RESET({
+        resetSequence();
+    })
+    DO_END()
+}
+
+
+////////////////  Weiter mit SE..
 ////////////////  Old Sequences will follow after that Line
 ////////////////
 
-
-
+  
 ///////////////
 
 
