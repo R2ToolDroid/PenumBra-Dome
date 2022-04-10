@@ -5,6 +5,30 @@ MARCDUINO_ACTION(StopSequence, :SE00, ({
         resetSequence();
 }))
 
+MARCDUINO_ACTION(Mode0Sequence, mode0, ({   
+        RLD.selectScrollTextLeft("... R2 in Mode 0 Random.", LogicEngineRenderer::kBlue, 0, 15);
+        FLD.selectScrollTextLeft("MOD 0", LogicEngineRenderer::kBlue, 1, 15);
+}))
+
+MARCDUINO_ACTION(Mode1Sequence, mode1, ({   
+        RLD.selectScrollTextLeft("... R2 in Mode 1 RC Control.", LogicEngineRenderer::kGreen, 0, 15);
+        FLD.selectScrollTextLeft("MOD 1", LogicEngineRenderer::kGreen, 1, 15);
+}))
+
+MARCDUINO_ACTION(Mode2Sequence, mode2, ({   
+        RLD.selectScrollTextLeft("... R2 in Mode 2 Human.", LogicEngineRenderer::kOrange, 0, 15);
+        FLD.selectScrollTextLeft("MOD 2", LogicEngineRenderer::kOrange, 1, 15);
+}))
+
+MARCDUINO_ACTION(Mode3Sequence, mode3, ({   
+        RLD.selectScrollTextLeft("... R2 in Mode 3 Service.", LogicEngineRenderer::kRed, 0, 15);
+        FLD.selectScrollTextLeft("MOD 3", LogicEngineRenderer::kRed, 1, 15);
+}))
+
+
+
+
+
 
 MARCDUINO_ANIMATION (ScreamSequence, :SE01){
     DO_START()
@@ -26,7 +50,7 @@ MARCDUINO_ACTION(WaveSequence, :SE02, ({
 
       CommandEvent::process(F( 
         "LE63305\n"  //Flash Yellow 5 second
-        "HPA00325\n"    // HP Yellow
+        "HPA00325|5\n"    // HP Yellow
         "HPA199\n"      //Move all to RND Position
         "MP30005"));    /// Magic Flash 5 Sec
         
@@ -43,8 +67,8 @@ MARCDUINO_ACTION(SmirkWaveSequence, :SE03, ({
       PSI_COM.print("0T2\r");
 
       CommandEvent::process(F( 
-        "LE70005\n"     //Flash Back and Front
-        "HPA0045\n"    // HP Yellow
+        "LE65504\n"     //Flash Back and Front
+        "HPA004|4\n"    // HP Yellow
         "HPA199\n"      //Move all to RND Position
         "MP30005"));    /// Magic Flash 5 Sec
       
@@ -62,7 +86,7 @@ MARCDUINO_ANIMATION (Wave2Sequence, :SE04){
     DO_COMMAND(F( 
       "HPA0031|5\n" //Puse All Red
       "HPA1012\n"   // Holos UP
-      "LE10505\n"   //Logic Alarm 5 Sec
+      "LE63500\n"   //Logic Alarm 5 Sec
       "MP40005\n"   //Magic Panel Alarm 5 Sec
     ))
     DO_ONCE (
@@ -144,6 +168,10 @@ MARCDUINO_ANIMATION(ShortSequence, :SE06)
         ))
     // Wait 3 seconds
     DO_WAIT_SEC(3)
+    DO_ONCE({
+     PSI_COM.print("0T0\r"); //off
+    })
+    
     DO_COMMAND(F(
         // Smoke off
         "MP80005\n"
@@ -173,7 +201,10 @@ MARCDUINO_ANIMATION(CantinaSequence, :SE07)
 {
     DO_START()
     DO_ONCE({
-     PSI_COM.print("0T13\r");  // Disco Ball long 
+     PSI_COM.print("0T13\r");  // Disco Ball long  
+        FLD.selectSequence(LogicEngineRenderer::RAINBOW);
+        RLD.selectScrollTextLeft("STAR WARS R2-D2 ASTROMECH", LogicEngineRenderer::ColorVal(random(10)));
+   
     })
     // Play Orchestral Cantina
     DO_COMMAND(F(
@@ -184,7 +215,7 @@ MARCDUINO_ANIMATION(CantinaSequence, :SE07)
     DO_WAIT_SEC(1)
     DO_COMMAND(F(
         // Disco Logics
-        "LE104146\n"
+        // "LE104146\n"
         // Holo Short Circuit
         "HPA006|46\n"))
     //DO_SEQUENCE(SeqPanelDance, DOME_DANCE_PANELS_MASK)
@@ -308,7 +339,7 @@ MARCDUINO_ANIMATION(AwakePlusSequence, :SE14)
     DO_COMMAND(F(
         "MP30005\n"
         "HPA0040\n"
-        "LE60005\n"
+        //"LE60005\n"
         "HPA104\n"
         ))
     
@@ -601,10 +632,15 @@ MARCDUINO_ANIMATION(RhytmicCantinaSequence, :SE57)
 MARCDUINO_ANIMATION(ShortRandHolo, *RND)
 {
   DO_START()
+
+    DO_ONCE({
+     PSI_COM.print("0T7\r"); //Short Circuit
+    })
+    
     DO_COMMAND(F(
         
         "HPA0040\n"
-        "LE20000\n"
+        //"LE20000\n"
         "HPA104\n"
         ))
     

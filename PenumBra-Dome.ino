@@ -145,7 +145,7 @@ void setup()
     DEBUG_PRINTLN("ready.."); 
 
 
-    FLD.selectScrollTextLeft("R2\n    D2", LogicEngineRenderer::kBlue, 1, 15);
+    FLD.selectScrollTextLeft("R2 D2", LogicEngineRenderer::kBlue, 1, 15);
     RLD.selectScrollTextLeft("... RSeries Doc Snyder ....", LogicEngineRenderer::kYellow, 0, 15);
 
     //CommandEvent::process(F("HPF104"));  
