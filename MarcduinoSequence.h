@@ -685,8 +685,117 @@ MARCDUINO_ANIMATION(ShortRandHolo, *RND)
     DO_END()
 }
 
+MARCDUINO_ANIMATION(Short1RandHolo, *RD00)
+{
+  DO_START()
+
+    DO_ONCE({
+     PSI_COM.print("0T7\r"); //Short Circuit
+    })
+    
+    DO_COMMAND(F(
+        
+        "HPA0040\n"
+        //"LE20000\n"
+        "HPA104\n"
+        ))
+    
+    DO_WAIT_SEC(2) 
+    DO_COMMAND(F( 
+      "HPA104\n"
+    ))
+    DO_WAIT_SEC(1) 
+    DO_COMMAND(F( 
+      "HPA104\n" 
+      "HPA006\n"
+    ))
+    DO_WAIT_SEC(2) 
+    DO_COMMAND(F( 
+      "HPA104\n"
+      ))
+    DO_WAIT_SEC(2) 
+    DO_COMMAND(F( 
+      "HPA104\n"
+      ))
+    DO_WAIT_SEC(3) 
+    DO_COMMAND(F( 
+      "HPA104\n"
+      ))
+    DO_WAIT_SEC(2) 
+    DO_COMMAND(F( 
+      "HPA104\n"
+      ))
+      
+    DO_WAIT_SEC(3) 
+    DO_COMMAND(F( 
+      "HPA04\n"
+      
+      ))
+    DO_WAIT_SEC(2) 
+    DO_COMMAND(F(
+       
+      "HPA1011\n"
+      "HPA0000\n"
+      ))
+   
+    DO_END()
+}
 
 
+MARCDUINO_ANIMATION(ShortARandHolo, *RD01)
+{
+  DO_START()
+
+    
+    
+    DO_COMMAND(F(
+        
+        "HPF0059\n"
+        //"LE20000\n"
+        "HPF104\n"
+        ))
+    
+    DO_WAIT_SEC(2) 
+    DO_COMMAND(F( 
+      "HPF104\n"
+    ))
+    DO_WAIT_SEC(1) 
+    DO_COMMAND(F( 
+      "HPF104\n" 
+      
+    ))
+    DO_WAIT_SEC(2) 
+    DO_COMMAND(F( 
+      "HPF104\n"
+      ))
+    DO_WAIT_SEC(2) 
+    DO_COMMAND(F( 
+      "HPF104\n"
+      ))
+    DO_WAIT_SEC(3) 
+    DO_COMMAND(F( 
+      "HPA104\n"
+      //"HPF006\n"
+      ))
+    DO_WAIT_SEC(2) 
+    DO_COMMAND(F( 
+      "HPF104\n"
+      ))
+      
+    DO_WAIT_SEC(3) 
+    DO_COMMAND(F( 
+      "HPF104\n"
+      
+      ))
+    DO_WAIT_SEC(2) 
+    DO_COMMAND(F(
+       
+      "HPF1011\n"
+      "HPF0000\n"
+      ))
+   
+    DO_END()
+}
 
 
 
