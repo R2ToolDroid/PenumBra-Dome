@@ -282,7 +282,7 @@ MARCDUINO_ANIMATION(FullAwakeSequence, :SE11)
     DO_START()
     DO_COMMAND(F(
         "MP30005\n"
-        "HPA0040\n"
+        "HPA0059\n"
         "LE60005\n"
         "HPA104\n"
         ))
@@ -294,7 +294,7 @@ MARCDUINO_ANIMATION(FullAwakeSequence, :SE11)
     DO_WAIT_SEC(1) 
     DO_COMMAND(F( 
       "HPA104\n" 
-      "HPA006\n"
+      //"HPA006\n"
     ))
     DO_WAIT_SEC(2) 
     DO_COMMAND(F( 
@@ -338,9 +338,10 @@ MARCDUINO_ANIMATION(AwakePlusSequence, :SE14)
     DO_START()
     DO_COMMAND(F(
         "MP30005\n"
-        "HPA0040\n"
+        "HPA0059\n"  /// Weiss ON
+       
         //"LE60005\n"
-        "HPA104\n"
+        "HPA104\n"    ///
         ))
     
     DO_WAIT_SEC(2) 
@@ -350,7 +351,7 @@ MARCDUINO_ANIMATION(AwakePlusSequence, :SE14)
     DO_WAIT_SEC(1) 
     DO_COMMAND(F( 
       "HPA104\n" 
-      "HPA006\n"
+      //"HPA006\n"
     ))
     DO_WAIT_SEC(2) 
     DO_COMMAND(F( 
