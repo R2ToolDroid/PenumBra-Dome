@@ -123,7 +123,7 @@ void setup()
 
     REELTWO_READY();
     Wire.begin();
-    //Wire.setClock(400000); //Set i2c frequency to 400 kHz.
+    Wire.setClock(400000); //Set i2c frequency to 400 kHz.
 
     randomSeed(analogRead(3));
 
@@ -145,8 +145,8 @@ void setup()
     DEBUG_PRINTLN("ready.."); 
 
 
-    FLD.selectScrollTextLeft("R2 D2", LogicEngineRenderer::kBlue, 1, 15);
-    RLD.selectScrollTextLeft("... RSeries Doc Snyder ....", LogicEngineRenderer::kYellow, 0, 15);
+    FLD.selectScrollTextLeft("R2 D2", LogicEngineRenderer::kBlue, 1, 5);
+    RLD.selectScrollTextLeft("... RSeries Doc Snyder ....", LogicEngineRenderer::kYellow, 0, 3);
 
     //CommandEvent::process(F("HPF104"));  
     //servoDispatch.moveTo(0, 150, 1000, 1.0);  

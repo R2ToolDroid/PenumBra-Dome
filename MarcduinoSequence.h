@@ -283,7 +283,7 @@ MARCDUINO_ANIMATION(FullAwakeSequence, :SE11)
     DO_COMMAND(F(
         "MP30005\n"
         "HPA0059\n"
-        "LE60005\n"
+        "LE57004\n"
         "HPA104\n"
         ))
     
