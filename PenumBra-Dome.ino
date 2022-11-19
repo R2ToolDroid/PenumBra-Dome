@@ -43,17 +43,41 @@
 #include "dome/Logics.h"   //HACK to switch PINs to different Position  FRONT 29 REAR 28 
 #include "dome/MagicPanel.h"   /// PIN 8 DATA | PIN 7 CLK | PIN 6 CS
 
-#define COMMAND_SERIAL Serial1 //   Serial1 for LIVE 
+#define COMMAND_SERIAL Serial //   Serial1 for LIVE 
 
 #define PSI_COM Serial3 //  serial for PSI Pro
 #define DOME_BTN_L A0
 #define DOME_BTN_R A1
 
+#define SMALL_PANEL         0x0001
+#define MEDIUM_PANEL        0x0002
+#define BIG_PANEL           0x0004
+#define PIE_PANEL           0x0008
+
+
 
 #define HOLO_HSERVO        0x1000
 #define HOLO_VSERVO        0x2000
 
+#define DOME_PANELS_MASK        (SMALL_PANEL|MEDIUM_PANEL|BIG_PANEL)
+#define PIE_PANELS_MASK         (PIE_PANEL)
+#define ALL_DOME_PANELS_MASK    (DOME_PANELS_MASK|PIE_PANELS_MASK)
 #define HOLO_SERVOS_MASK        (HOLO_HSERVO|HOLO_VSERVO)
+
+#define PANEL_GROUP_1      (1L<<14)
+#define PANEL_GROUP_2      (1L<<15)
+#define PANEL_GROUP_3      (1L<<16)
+#define PANEL_GROUP_4      (1L<<17)
+#define PANEL_GROUP_5      (1L<<18)
+#define PANEL_GROUP_6      (1L<<19)
+#define PANEL_GROUP_7      (1L<<20)
+#define PANEL_GROUP_8      (1L<<21)
+#define PANEL_GROUP_9      (1L<<22)
+#define PANEL_GROUP_10     (1L<<23)
+
+
+
+
 
 const ServoSettings servoSettings[] PROGMEM = {
 
@@ -65,6 +89,21 @@ const ServoSettings servoSettings[] PROGMEM = {
     { 4, 800, 1200, HOLO_VSERVO },  /* 3: vertical top holo */
     { 5, 800, 1200, HOLO_VSERVO },  /* 4: vertical rear holo */
     { 6, 800, 1200, HOLO_HSERVO },  /* 5: horizontal rear holo */
+
+    { 7,  1650, 1000, PANEL_GROUP_1|SMALL_PANEL },  /* 1: door 1 */
+    { 8,  2300, 1500, PANEL_GROUP_2|SMALL_PANEL },  /* 2: door 2 */
+    { 9,  1650, 900,  PANEL_GROUP_3|SMALL_PANEL },  /* 3: door 3 */
+    { 10, 1950, 1200, PANEL_GROUP_4|SMALL_PANEL },  /* 4: door 4 */
+    { 11, 1900, 1300, PANEL_GROUP_5|MEDIUM_PANEL }, /* 5: door 5 */
+    { 12, 2000, 1200, PANEL_GROUP_6|BIG_PANEL },    /* 6: door 6 */
+    
+    { 13, 1900, 1250, PANEL_GROUP_7|PIE_PANEL },   /* 8: pie panel 1 */
+    { 14, 1700, 1075, PANEL_GROUP_8|PIE_PANEL },    /* 9: pie panel 2 */
+    { 15, 2000, 1200, PANEL_GROUP_9|PIE_PANEL },    /* 10: pie panel 3 */
+    { 16, 1450,  750, PANEL_GROUP_10|PIE_PANEL },    /* 11: pie panel 4 */
+
+
+    
 };
 
 //ServoDispatchDirect<SizeOfArray(servoSettings)> servoDispatch(servoSettings);
@@ -98,7 +137,7 @@ LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault, 2);
 
 void resetSequence()
 {
-   
+   SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
     CommandEvent::process(F( 
         "LE000000|0\n"  //Logic Off
         "HPA000|0\n"    // HP Off
@@ -112,6 +151,8 @@ void resetSequence()
 #include "MarduinoHolo.h"
 #include "MarcduinoSequence.h"
 #include "MarcduinoMagicPanel.h"
+
+#include "MarcduinoPanel.h"
 
 #include "DomeButton.h"
 
@@ -154,6 +195,8 @@ void setup()
    //CommandEvent::process(F("HPS9|45"));
 
     CommandEvent::process("MP20005");
+
+    SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
 
     //PSI_COM.print("0T2\r");
 
@@ -391,5 +434,56 @@ void loop()
     AnimatedEvent::process();
     DomeButton();
 
+#ifdef USE_DEBUG
+    if (DEBUG_SERIAL.available())
+    {
+        int ch = DEBUG_SERIAL.read();
+        if (ch == 'o')
+        {
+            SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllOpen, PANEL_GROUP_1);
+        }
+        else if (ch == '1')
+        {
+            SEQUENCE_PLAY_ONCE_SPEED(servoSequencer, SeqPanelWave, ALL_DOME_PANELS_MASK, 1000);
+        }
+        else if (ch == '2')
+        {
+            SEQUENCE_PLAY_ONCE_VARSPEED(servoSequencer, SeqPanelAllFlutter, ALL_DOME_PANELS_MASK, 10, 50);
+        }
+        else if (ch == '3')
+        {
+            //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllOpen, ALL_DOME_PANELS_MASK);
+
+            servoDispatch.setServosEasingMethod(ALL_DOME_PANELS_MASK, Easing::BounceEaseOut);
+            SEQUENCE_PLAY_ONCE_SPEED(servoSequencer, SeqPanelAllOpen, ALL_DOME_PANELS_MASK, 1000);
+        }
+        else if (ch == '4')
+        {
+            frontHolo.moveHP(HoloLights::kCenter, 500);
+        }
+        else if (ch == 'e')
+        {
+            // servoDispatch.setServosEasingMethod(GROUP_RIGHTDOOR, Easing::CircularEaseIn);
+            SEQUENCE_PLAY_ONCE_VARSPEED(servoSequencer, SeqPanelMarchingAnts, ALL_DOME_PANELS_MASK, 50, 100);
+        }
+        else if (ch == 'f')
+        {
+            SEQUENCE_PLAY_ONCE_VARSPEED_EASING(servoSequencer, SeqPanelMarchingAnts, ALL_DOME_PANELS_MASK, 500, 1000, Easing::CircularEaseIn, Easing::BounceEaseOut);
+        }
+        else if (ch == 'c')
+        {
+            //servoDispatch.setServosEasingMethod(ALL_DOME_PANELS_MASK, Easing::BounceEaseOut);
+            SEQUENCE_PLAY_ONCE_SPEED(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK, 1000);
+        }
+        else
+        {
+            //DEBUG_PRINTLN("STOP ALL SERVOS");
+            //servoDispatch.stop();
+        }
+    }
+#endif
+    
+
+    
 
 }
