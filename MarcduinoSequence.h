@@ -41,9 +41,10 @@ MARCDUINO_ANIMATION (ScreamSequence, :SE01){
     DO_ONCE (
       PSI_COM.print("0T5\r");
       )
-    DO_END()
     
+    DO_SEQUENCE(SeqPanelAllOpenClose, ALL_DOME_PANELS_MASK)
     //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllOpenClose, ALL_DOME_PANELS_MASK);
+    DO_END()
 }
 
 MARCDUINO_ACTION(WaveSequence, :SE02, ({
@@ -60,7 +61,7 @@ MARCDUINO_ACTION(WaveSequence, :SE02, ({
      // CommandEvent::process(F("HPA00305")); 
      // CommandEvent::process("LE10005");
     //Marcduino::send(F("$213"));
-    //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelWave, ALL_DOME_PANELS_MASK);
+    SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelWave, ALL_DOME_PANELS_MASK);
 }))
 
 MARCDUINO_ACTION(SmirkWaveSequence, :SE03, ({
@@ -78,11 +79,12 @@ MARCDUINO_ACTION(SmirkWaveSequence, :SE03, ({
 
       
     //Marcduino::send(F("$34"));
-    //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelWaveFast, ALL_DOME_PANELS_MASK);
+    SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelWaveFast, ALL_DOME_PANELS_MASK);
 }))
 
 MARCDUINO_ANIMATION (Wave2Sequence, :SE04){
     DO_START()
+    DO_SEQUENCE(SeqPanelAllOpenClose, ALL_DOME_PANELS_MASK)
     DO_COMMAND(F( 
       "HPA0031|5\n" //Puse All Red
       "HPA1012\n"   // Holos UP
@@ -108,14 +110,19 @@ MARCDUINO_ANIMATION (Wave2Sequence, :SE04){
        
     DO_END()
     
-    //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllOpenClose, ALL_DOME_PANELS_MASK);
+   // SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllOpenClose, ALL_DOME_PANELS_MASK)
 }
+
 
 MARCDUINO_ANIMATION(BeepCantinaSequence, :SE05)
 {
     DO_START()
+    //DO_SEQUENCE(SeqPanelLongDisco, ALL_DOME_PANELS_MASK)
+    DO_SEQUENCE_VARSPEED(SeqPanelMarchingAnts, ALL_DOME_PANELS_MASK, 50, 100);
+    
     DO_ONCE({
      PSI_COM.print("0T9\r"); ///Flashing Heard Ball
+     
     })
     
     DO_COMMAND(F(
@@ -124,15 +131,18 @@ MARCDUINO_ANIMATION(BeepCantinaSequence, :SE05)
         "HPF106|5\n"
         "MP50015\n"
         // Holo Short Circuit
-        "HPA004|15\n"))
-    //DO_SEQUENCE(SeqPanelMarchingAnts, ALL_DOME_PANELS_MASK)
+        "HPA004|15\n"
+        ))
+    
     // Wait 15 seconds
-    DO_WAIT_SEC(15)
+    DO_WAIT_SEC(60)
     DO_RESET({
-        resetSequence();
+      resetSequence();
     })
     DO_END()
 }
+
+
 
 MARCDUINO_ANIMATION(ShortSequence, :SE06)
 {
@@ -186,7 +196,7 @@ MARCDUINO_ANIMATION(ShortSequence, :SE06)
         "MP90005\n"
         // Holo off
         "HPA000|0\n"))
-    //DO_SEQUENCE_VARSPEED(SeqPanelAllOpenCloseLong, ALL_DOME_PANELS_MASK, 700, 900);
+    DO_SEQUENCE_VARSPEED(SeqPanelAllOpenCloseLong, ALL_DOME_PANELS_MASK, 700, 900);
     // Fake being dead for 8 seconds
     DO_WAIT_SEC(8)
     // Ok We are back!
@@ -200,6 +210,7 @@ MARCDUINO_ANIMATION(ShortSequence, :SE06)
 MARCDUINO_ANIMATION(CantinaSequence, :SE07)
 {
     DO_START()
+    DO_SEQUENCE(SeqPanelDance, ALL_DOME_PANELS_MASK)
     DO_ONCE({
      PSI_COM.print("0T13\r");  // Disco Ball long  
         FLD.selectSequence(LogicEngineRenderer::RAINBOW);
@@ -218,7 +229,7 @@ MARCDUINO_ANIMATION(CantinaSequence, :SE07)
         // "LE104146\n"
         // Holo Short Circuit
         "HPA006|46\n"))
-    //DO_SEQUENCE(SeqPanelDance, DOME_DANCE_PANELS_MASK)
+    //DO_SEQUENCE(SeqPanelDance, ALL_DOME_PANELS_MASK)
     // Wait 46 seconds
     DO_WAIT_SEC(46)
     DO_RESET({
@@ -258,7 +269,7 @@ MARCDUINO_ANIMATION(DiscoSequence, :SE09)
       ))
     DO_WAIT_SEC(10)
     //DO_MARCDUINO(F("$D"))
-    //DO_SEQUENCE(SeqPanelLongDisco, DOME_DANCE_PANELS_MASK)
+    DO_SEQUENCE(SeqPanelLongDisco, ALL_DOME_PANELS_MASK)
     DO_ONCE({
         FLD.selectSequence(LogicEngineRenderer::RAINBOW);
         RLD.selectScrollTextLeft("STAR WARS R2-D2 ASTROMECH", LogicEngineRenderer::ColorVal(random(10)));
@@ -385,7 +396,7 @@ MARCDUINO_ANIMATION(AwakePlusSequence, :SE14)
     DO_END()
 }
 
-MARCDUINO_ANIMATION (ScreamNPSequence, :SE05){
+MARCDUINO_ANIMATION (ScreamNPSequence, :SE15){
     DO_START()
     DO_COMMAND(F( 
       "HPA0031|5\n" //Puse All Red
@@ -396,9 +407,12 @@ MARCDUINO_ANIMATION (ScreamNPSequence, :SE05){
     DO_ONCE (
       PSI_COM.print("0T5\r");
       )
+      
+   // DO_SEQUENCE(SeqPanelAllOpenClose, ALL_DOME_PANELS_MASK)
+      
     DO_END()
     
-    //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllOpenClose, ALL_DOME_PANELS_MASK);
+   
 }
 
 MARCDUINO_ANIMATION (ScreamNPSSequence, :SE51){
@@ -412,6 +426,7 @@ MARCDUINO_ANIMATION (ScreamNPSSequence, :SE51){
     DO_ONCE (
       PSI_COM.print("0T5\r");
       )
+    DO_SEQUENCE(SeqPanelAllFlutter, ALL_DOME_PANELS_MASK)
     DO_END()
     
     //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllOpenClose, ALL_DOME_PANELS_MASK);
@@ -420,6 +435,7 @@ MARCDUINO_ANIMATION (ScreamNPSSequence, :SE51){
 
 MARCDUINO_ANIMATION (WaveOneSequence, :SE52){
     DO_START()
+    DO_SEQUENCE(SeqPanelOpenCloseWave, ALL_DOME_PANELS_MASK)
     DO_COMMAND(F( 
         "LE56000\n"  //Blue
         "HPA00388\n"    // HP Pink
@@ -437,6 +453,7 @@ MARCDUINO_ANIMATION (WaveOneSequence, :SE52){
 
 MARCDUINO_ANIMATION (FastSmirkSequence, :SE53){
     DO_START()
+    DO_SEQUENCE(SeqPanelWaveFast, ALL_DOME_PANELS_MASK)
     DO_COMMAND(F( 
         "LE63503\n"     //Flash Back and Front
         "HPA0043\n"    // HP Yellow
@@ -463,7 +480,8 @@ MARCDUINO_ANIMATION (WaveTwoSequence, :SE54){
     DO_ONCE (     
       PSI_COM.print("0T8\r");  ///Sweep
     )
-    DO_WAIT_SEC (5)
+    DO_SEQUENCE(SeqPanelWaveFast, ALL_DOME_PANELS_MASK)
+    DO_WAIT_SEC (10)
     DO_RESET({
         resetSequence();
     })
@@ -472,6 +490,8 @@ MARCDUINO_ANIMATION (WaveTwoSequence, :SE54){
 
 MARCDUINO_ANIMATION (MarchingAntsSequence, :SE55){
     DO_START()
+    //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelMarchingAnts, ALL_DOME_PANELS_MASK);
+    DO_SEQUENCE(SeqPanelMarchingAnts, ALL_DOME_PANELS_MASK)
     DO_COMMAND(F( 
         "LE40505\n"  //Blue
         "HPA0040\n"    // HP 
@@ -547,7 +567,7 @@ MARCDUINO_ANIMATION(FaintShortSequence, :SE55)
         "MP90005\n"
         // Holo off
         "HPA000|0\n"))
-    //DO_SEQUENCE_VARSPEED(SeqPanelAllOpenCloseLong, ALL_DOME_PANELS_MASK, 700, 900);
+    DO_SEQUENCE_VARSPEED(SeqPanelAllOpenCloseLong, ALL_DOME_PANELS_MASK, 700, 900);
     // Fake being dead for 8 seconds
     DO_WAIT_SEC(8)
     // Ok We are back!
@@ -567,7 +587,7 @@ MARCDUINO_ANIMATION(RhytmicCantinaSequence, :SE57)
         "LE40500\n"
         "HPA104\n"
         ))
-    
+    DO_SEQUENCE_VARSPEED(SeqPanelAllOpenCloseLong, ALL_DOME_PANELS_MASK, 700, 900);
     DO_WAIT_SEC(2) 
     DO_COMMAND(F( 
       "HPA104\n"

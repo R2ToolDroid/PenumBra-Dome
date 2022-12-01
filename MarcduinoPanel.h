@@ -3,17 +3,20 @@
 MARCDUINO_ACTION(CloseAllPanels, :CL00, ({
     //Marcduino::processCommand(player, "@4S3");
     SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
-    Serial.print("CL00");
+    //FLD.selectScrollTextLeft("R2\n D2", LogicEngineRenderer::kBlue, 1, 15);
+    //Serial1.print("-CL00");
 }))
 
 ////////////////
 
 MARCDUINO_ACTION(OpenAllPanels, :OP00, ({
     SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllOpen, ALL_DOME_PANELS_MASK);
-    Serial.print("OP00");
+    //RLD.selectScrollTextLeft("... RSeries LogicEngine ....", LogicEngineRenderer::kYellow, 0, 15);
+   // Serial1.print("-OP00");
 }))
 
 ////////////////
+
 
 MARCDUINO_ACTION(FlutterAllPanels, :OF00, ({
     SEQUENCE_PLAY_ONCE_VARSPEED(servoSequencer, SeqPanelAllFlutter, ALL_DOME_PANELS_MASK, 10, 50);

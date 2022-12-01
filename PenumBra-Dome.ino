@@ -40,10 +40,15 @@
 #include "core/Marcduino.h"
 #include "core/JawaCommander.h"
 #include "dome/HoloLights.h"
+
+#define FRONT_LOGIC_PIN 29
+#define REAR_LOGIC_PIN 28
 #include "dome/Logics.h"   //HACK to switch PINs to different Position  FRONT 29 REAR 28 
 #include "dome/MagicPanel.h"   /// PIN 8 DATA | PIN 7 CLK | PIN 6 CS
 
 #define COMMAND_SERIAL Serial //   Serial1 for LIVE 
+
+//#ifdef RECEIVE_MARCDUINO_COMMANDS
 
 #define PSI_COM Serial3 //  serial for PSI Pro
 #define DOME_BTN_L A0
@@ -113,7 +118,9 @@ ServoDispatchPCA9685<SizeOfArray(servoSettings)> servoDispatch(servoSettings);
 ServoSequencer servoSequencer(servoDispatch);
 AnimationPlayer player(servoSequencer);
 JawaCommander<> jawaCommander;
+
 MarcduinoSerial<> marcduinoSerial(COMMAND_SERIAL, player);
+
 
 
 HoloLights frontHolo(22,HoloLights::kRGB, HoloLights::kFrontHolo,12);        // PIN Dout1
@@ -186,7 +193,7 @@ void setup()
     DEBUG_PRINTLN("ready.."); 
 
 
-    FLD.selectScrollTextLeft("R2 D2", LogicEngineRenderer::kBlue, 1, 5);
+    FLD.selectScrollTextLeft("R2 D2-\n-by Doc", LogicEngineRenderer::kBlue, 1, 5);
     RLD.selectScrollTextLeft("... RSeries Doc Snyder ....", LogicEngineRenderer::kYellow, 0, 3);
 
     //CommandEvent::process(F("HPF104"));  
