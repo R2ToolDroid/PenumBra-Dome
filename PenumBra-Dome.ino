@@ -9,6 +9,8 @@
 
 //SERIAL 3 for PSI Pro
 
+//SERIAL direct  9600 bd mit Zeilenumbruch (CR)
+
 /*
  --- Magic panel ---
  SV5   CS
@@ -95,17 +97,18 @@ const ServoSettings servoSettings[] PROGMEM = {
     { 5, 800, 1200, HOLO_VSERVO },  /* 4: vertical rear holo */
     { 6, 800, 1200, HOLO_HSERVO },  /* 5: horizontal rear holo */
 
-    { 7,  1650, 1000, PANEL_GROUP_1|SMALL_PANEL },  /* 1: door 1 */
-    { 8,  2300, 1500, PANEL_GROUP_2|SMALL_PANEL },  /* 2: door 2 */
-    { 9,  1650, 900,  PANEL_GROUP_3|SMALL_PANEL },  /* 3: door 3 */
-    { 10, 1950, 1200, PANEL_GROUP_4|SMALL_PANEL },  /* 4: door 4 */
-    { 11, 1900, 1300, PANEL_GROUP_5|MEDIUM_PANEL }, /* 5: door 5 */
+    { 7,  1800, 900, PANEL_GROUP_1|SMALL_PANEL },  /* 1: door 1 */
+    { 8,  2050, 900,PANEL_GROUP_2|SMALL_PANEL },  /* 2: door 2 */
+    { 9,  2000, 900, PANEL_GROUP_3|SMALL_PANEL },  /* 3: door 3 */
+    { 10, 1800, 900, PANEL_GROUP_4|SMALL_PANEL },  /* 4: door 4 */
+    
+    { 11, 1900, 1200, PANEL_GROUP_5|MEDIUM_PANEL }, /* 5: door 5 */
     { 12, 2000, 1200, PANEL_GROUP_6|BIG_PANEL },    /* 6: door 6 */
     
-    { 13, 1900, 1250, PANEL_GROUP_7|PIE_PANEL },   /* 8: pie panel 1 */
-    { 14, 1700, 1075, PANEL_GROUP_8|PIE_PANEL },    /* 9: pie panel 2 */
-    { 15, 2000, 1200, PANEL_GROUP_9|PIE_PANEL },    /* 10: pie panel 3 */
-    { 16, 1450,  750, PANEL_GROUP_10|PIE_PANEL },    /* 11: pie panel 4 */
+    { 13, 2100, 1200, PANEL_GROUP_7|PIE_PANEL },   /* 8: pie panel 1 */
+    { 14, 1800, 800, PANEL_GROUP_8|PIE_PANEL },    /* 9: pie panel 2 */
+    { 15, 2050, 800, PANEL_GROUP_9|PIE_PANEL },    /* 10: pie panel 3 */
+    { 16, 2250, 1000, PANEL_GROUP_10|PIE_PANEL },    /* 11: pie panel 4 */
 
 
     
@@ -141,10 +144,16 @@ LogicEngineDeathStarFLD<> FLD(LogicEngineFLDDefault, 1);
 // Rear Logic Device (Jawa ID#2)
 LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault, 2);
 
+//SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
+
 
 void resetSequence()
 {
-   SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
+   //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
+
+   //servoDispatch.setServosEasingMethod(HOLO_SERVOS_MASK, Easing::CircularEaseIn);
+   // SEQUENCE_PLAY_ONCE_SPEED(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK, 1000);
+    
     CommandEvent::process(F( 
         "LE000000|0\n"  //Logic Off
         "HPA000|0\n"    // HP Off
@@ -202,8 +211,11 @@ void setup()
    //CommandEvent::process(F("HPS9|45"));
 
     CommandEvent::process("MP20005");
+    //servoDispatch.setServosEasingMethod(ALL_DOME_PANELS_MASK, Easing::BounceEaseOut);
+    //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
 
-    SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
+    //servoDispatch.setServosEasingMethod(HOLO_SERVOS_MASK, Easing::CircularEaseIn);
+    SEQUENCE_PLAY_ONCE_SPEED(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK, 2000);
 
     //PSI_COM.print("0T2\r");
 
@@ -433,6 +445,7 @@ D199    - Enables Auto HP Twitch
 
 
 }  /*END SETUP */
+
 
 
 
