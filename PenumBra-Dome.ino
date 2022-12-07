@@ -97,18 +97,18 @@ const ServoSettings servoSettings[] PROGMEM = {
     { 5, 800, 1200, HOLO_VSERVO },  /* 4: vertical rear holo */
     { 6, 800, 1200, HOLO_HSERVO },  /* 5: horizontal rear holo */
 
-    { 7,  1800, 900, PANEL_GROUP_1|SMALL_PANEL },  /* 1: door 1 */
-    { 8,  2050, 900,PANEL_GROUP_2|SMALL_PANEL },  /* 2: door 2 */
-    { 9,  2000, 900, PANEL_GROUP_3|SMALL_PANEL },  /* 3: door 3 */
-    { 10, 1800, 900, PANEL_GROUP_4|SMALL_PANEL },  /* 4: door 4 */
+    { 7,  1950, 1150, PANEL_GROUP_1|SMALL_PANEL },  /* 1: door 1 */
+    { 8,  2080, 1200,PANEL_GROUP_2|SMALL_PANEL },  /* 2: door 2 */
+    { 9,  2150, 1200, PANEL_GROUP_3|SMALL_PANEL },  /* 3: door 3 */
+    { 10, 1900, 1000, PANEL_GROUP_4|SMALL_PANEL },  /* 4: door 4 */
     
-    { 11, 1900, 1200, PANEL_GROUP_5|MEDIUM_PANEL }, /* 5: door 5 */
-    { 12, 2000, 1200, PANEL_GROUP_6|BIG_PANEL },    /* 6: door 6 */
+    { 11, 2050, 1200, PANEL_GROUP_5|MEDIUM_PANEL }, /* 5: door 5 */
+    { 12, 2000, 1300, PANEL_GROUP_6|BIG_PANEL },    /* 6: door 6 */
     
-    { 13, 2100, 1200, PANEL_GROUP_7|PIE_PANEL },   /* 8: pie panel 1 */
-    { 14, 1800, 800, PANEL_GROUP_8|PIE_PANEL },    /* 9: pie panel 2 */
+    { 13, 2050, 1100, PANEL_GROUP_7|PIE_PANEL },   /* 8: pie panel 1 */
+    { 14, 2050, 1100, PANEL_GROUP_8|PIE_PANEL },    /* 9: pie panel 2 */
     { 15, 2050, 800, PANEL_GROUP_9|PIE_PANEL },    /* 10: pie panel 3 */
-    { 16, 2250, 1000, PANEL_GROUP_10|PIE_PANEL },    /* 11: pie panel 4 */
+    { 16, 2050, 800, PANEL_GROUP_10|PIE_PANEL },    /* 11: pie panel 4 */
 
 
     
@@ -185,7 +185,7 @@ void setup()
     randomSeed(analogRead(3));
 
     // servoDispatch.setOutputEnablePin(OUTPUT_ENABLED_PIN, true);
-    servoDispatch.setClockCalibration((const uint32_t[]) { 27570000, 27190000 });
+    //servoDispatch.setClockCalibration((const uint32_t[]) { 27570000, 27190000 });
     //servoDispatch.setServosEasingMethod(HOLO_SERVOS_MASK, Easing::CircularEaseIn);
 
 

@@ -21,14 +21,17 @@ void MakeCommand(int row, int col){
 
                 case 1:
                 
-                DEBUG_PRINTLN("PSI "); 
+                DEBUG_PRINTLN("PSI ?"); 
                 PSI_COM.print("0T1\r");
+                SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
+
                 
                 break;
 
                 case 2:
                 DEBUG_PRINTLN("PSI 2"); 
                 PSI_COM.print("0T2\r");
+                
                 break;
 
                 case 3:
@@ -136,6 +139,8 @@ void MakeCommand(int row, int col){
 
                 case 0:
                 DEBUG_PRINTLN("com 1SE01"); 
+                SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllOpen, ALL_DOME_PANELS_MASK);
+
                 break;
 
                 case 1:

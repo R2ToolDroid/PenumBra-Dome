@@ -587,7 +587,7 @@ MARCDUINO_ANIMATION(RhytmicCantinaSequence, :SE57)
         "LE40500\n"
         "HPA104\n"
         ))
-    DO_SEQUENCE_VARSPEED(SeqPanelAllOpenCloseLong, ALL_DOME_PANELS_MASK, 700, 900);
+    DO_SEQUENCE_VARSPEED(SeqPanelLongHarlemShake, ALL_DOME_PANELS_MASK, 700, 900);
     DO_WAIT_SEC(2) 
     DO_COMMAND(F( 
       "HPA104\n"
