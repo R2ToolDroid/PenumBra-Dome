@@ -1,5 +1,5 @@
-//#define USE_DEBUG 
-//#define DEBUG_SERIAL
+#define USE_DEBUG 
+#define DEBUG_SERIAL
 //#define USE_SERVO_DEBUG
 //#define USE_HOLO_DEBUG
 
@@ -48,7 +48,7 @@
 #include "dome/Logics.h"   //HACK to switch PINs to different Position  FRONT 29 REAR 28 
 #include "dome/MagicPanel.h"   /// PIN 8 DATA | PIN 7 CLK | PIN 6 CS
 
-#define COMMAND_SERIAL Serial1 //   Serial1 for LIVE 
+#define COMMAND_SERIAL Serial //   Serial1 for LIVE 
 
 //#ifdef RECEIVE_MARCDUINO_COMMANDS
 
@@ -180,7 +180,7 @@ void setup()
 
     REELTWO_READY();
     Wire.begin();
-    Wire.setClock(400000); //Set i2c frequency to 400 kHz.
+   // Wire.setClock(400000); //Set i2c frequency to 400 kHz.
 
     randomSeed(analogRead(3));
 
@@ -196,7 +196,9 @@ void setup()
 
 
     COMMAND_SERIAL.begin(9600);
+    
     PSI_COM.begin(2400);
+    
     SetupEvent::ready();
 
     DEBUG_PRINTLN("ready.."); 
@@ -443,6 +445,10 @@ D199    - Enables Auto HP Twitch
 
 */
 
+DEBUG_PRINTLN("Debug Serial:");
+DEBUG_PRINTLN(DEBUG_SERIAL);
+
+
 
 }  /*END SETUP */
 
@@ -454,7 +460,7 @@ void loop()
     AnimatedEvent::process();
     DomeButton();
 
-#ifdef USE_DEBUG
+#ifdef USE_DEBUG_2
     if (DEBUG_SERIAL.available())
     {
         int ch = DEBUG_SERIAL.read();
