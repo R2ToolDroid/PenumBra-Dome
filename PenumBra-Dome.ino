@@ -1,6 +1,6 @@
-//#define USE_DEBUG 
-//#define DEBUG_SERIAL
-//#define USE_SERVO_DEBUG
+#define USE_DEBUG 
+#define DEBUG_SERIAL
+#define USE_SERVO_DEBUG
 //#define USE_HOLO_DEBUG
 
 //Penumbra Mega PIN Mapping
@@ -40,11 +40,12 @@
 #include "ServoDispatchPCA9685.h"
 #include "ServoSequencer.h"
 #include "core/Marcduino.h"
-#include "core/JawaCommander.h"
+
 #include "dome/HoloLights.h"
 
 #define FRONT_LOGIC_PIN 29
 #define REAR_LOGIC_PIN 28
+
 #include "dome/Logics.h"   //HACK to switch PINs to different Position  FRONT 29 REAR 28 
 #include "dome/MagicPanel.h"   /// PIN 8 DATA | PIN 7 CLK | PIN 6 CS
 
@@ -120,9 +121,6 @@ MagicPanel magicPanel;
 ServoDispatchPCA9685<SizeOfArray(servoSettings)> servoDispatch(servoSettings);
 ServoSequencer servoSequencer(servoDispatch);
 AnimationPlayer player(servoSequencer);
-
-//JawaCommander<> jawaCommander;
-
 MarcduinoSerial<> marcduinoSerial(COMMAND_SERIAL, player);
 
 
@@ -141,12 +139,13 @@ HoloLights topHolo(24, HoloLights::kRGB, HoloLights::kTopHolo);          // PIN 
 
 
 // Front Logic Device (Jawa ID#1)
-LogicEngineDeathStarFLD<> FLD(LogicEngineFLDDefault, 1);
+//# LogicEngineDeathStarFLD<> FLD(LogicEngineFLDDefault, 1);
+
 // Rear Logic Device (Jawa ID#2)
-LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault, 2);
+//# LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault, 2);
+
 
 //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
-
 
 void resetSequence()
 {
@@ -161,17 +160,18 @@ void resetSequence()
         "MP00000"));    /// Magic off
         
     PSI_COM.print("0T1\r");   //PSI off
+    DEBUG_PRINTLN("reset"); 
       
 }
 
 
-#include "MarduinoHolo.h"
-#include "MarcduinoSequence.h"
-#include "MarcduinoMagicPanel.h"
-
+//#include "MarduinoHolo.h"
+//#include "MarcduinoSequence.h"
+//#include "MarcduinoMagicPanel.h"
 #include "MarcduinoPanel.h"
+//#include "DomeButton.h"
 
-#include "DomeButton.h"
+
 
 
 void setup()
@@ -181,9 +181,14 @@ void setup()
 
     REELTWO_READY();
     Wire.begin();
+
+    COMMAND_SERIAL.begin(9600);
+
+    SetupEvent::ready();
+    
    // Wire.setClock(400000); //Set i2c frequency to 400 kHz.
 
-    randomSeed(analogRead(3));
+    //randomSeed(analogRead(3));
 
     // servoDispatch.setOutputEnablePin(OUTPUT_ENABLED_PIN, true);
     //servoDispatch.setClockCalibration((const uint32_t[]) { 27570000, 27190000 });
@@ -195,18 +200,16 @@ void setup()
     rearHolo.assignServos(&servoDispatch, 4, 5);
 
 
-
-    COMMAND_SERIAL.begin(9600);
     
     PSI_COM.begin(2400);
     
-    SetupEvent::ready();
+ 
 
     DEBUG_PRINTLN("ready.."); 
 
 
-    FLD.selectScrollTextLeft("R2 D2-\n-by Doc", LogicEngineRenderer::kBlue, 1, 5);
-    RLD.selectScrollTextLeft("... RSeries Doc Snyder ....", LogicEngineRenderer::kYellow, 0, 3);
+ //#   FLD.selectScrollTextLeft("R2 D2-\n-by Doc", LogicEngineRenderer::kBlue, 1, 5);
+ //#   RLD.selectScrollTextLeft("... RSeries Doc Snyder ....", LogicEngineRenderer::kYellow, 0, 3);
 
     //CommandEvent::process(F("HPF104"));  
     //servoDispatch.moveTo(0, 150, 1000, 1.0);  
@@ -461,58 +464,8 @@ DEBUG_PRINTLN(DEBUG_SERIAL);
 void loop()
 {
     AnimatedEvent::process();
-    DomeButton();
-
-#ifdef USE_DEBUG_2
-    if (DEBUG_SERIAL.available())
-    {
-        int ch = DEBUG_SERIAL.read();
-        if (ch == 'o')
-        {
-            SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllOpen, PANEL_GROUP_1);
-        }
-        else if (ch == '1')
-        {
-            SEQUENCE_PLAY_ONCE_SPEED(servoSequencer, SeqPanelWave, ALL_DOME_PANELS_MASK, 1000);
-        }
-        else if (ch == '2')
-        {
-            SEQUENCE_PLAY_ONCE_VARSPEED(servoSequencer, SeqPanelAllFlutter, ALL_DOME_PANELS_MASK, 10, 50);
-        }
-        else if (ch == '3')
-        {
-            //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllOpen, ALL_DOME_PANELS_MASK);
-
-            servoDispatch.setServosEasingMethod(ALL_DOME_PANELS_MASK, Easing::BounceEaseOut);
-            SEQUENCE_PLAY_ONCE_SPEED(servoSequencer, SeqPanelAllOpen, ALL_DOME_PANELS_MASK, 1000);
-        }
-        else if (ch == '4')
-        {
-            frontHolo.moveHP(HoloLights::kCenter, 500);
-        }
-        else if (ch == 'e')
-        {
-            // servoDispatch.setServosEasingMethod(GROUP_RIGHTDOOR, Easing::CircularEaseIn);
-            SEQUENCE_PLAY_ONCE_VARSPEED(servoSequencer, SeqPanelMarchingAnts, ALL_DOME_PANELS_MASK, 50, 100);
-        }
-        else if (ch == 'f')
-        {
-            SEQUENCE_PLAY_ONCE_VARSPEED_EASING(servoSequencer, SeqPanelMarchingAnts, ALL_DOME_PANELS_MASK, 500, 1000, Easing::CircularEaseIn, Easing::BounceEaseOut);
-        }
-        else if (ch == 'c')
-        {
-            //servoDispatch.setServosEasingMethod(ALL_DOME_PANELS_MASK, Easing::BounceEaseOut);
-            SEQUENCE_PLAY_ONCE_SPEED(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK, 1000);
-        }
-        else
-        {
-            //DEBUG_PRINTLN("STOP ALL SERVOS");
-            //servoDispatch.stop();
-        }
-    }
-#endif
     
+   // DomeButton();
 
-    
 
 }
