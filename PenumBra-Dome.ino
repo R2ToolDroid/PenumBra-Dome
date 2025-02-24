@@ -43,8 +43,8 @@
 
 #include "dome/HoloLights.h"
 
-#define FRONT_LOGIC_PIN 29
-#define REAR_LOGIC_PIN 28
+//#define FRONT_LOGIC_PIN 29
+//#define REAR_LOGIC_PIN 28
 
 #include "dome/Logics.h"   //HACK to switch PINs to different Position  FRONT 29 REAR 28 
 #include "dome/MagicPanel.h"   /// PIN 8 DATA | PIN 7 CLK | PIN 6 CS
@@ -133,16 +133,16 @@ HoloLights topHolo(24, HoloLights::kRGB, HoloLights::kTopHolo);          // PIN 
 //HoloLights rearHolo(HP_REAR_LED_PIN, HoloLights::kRGBW, HoloLights::kRearHolo);
 //HoloLights topHolo(HP_TOP_LED_PIN, HoloLights::kRGB, HoloLights::kTopHolo, 12);
 
-//LogicEngineDeathStarFLDInverted<> FLD(LogicEngineFLDDefault);
-//LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault);
+LogicEngineDeathStarFLDInverted<> FLD(LogicEngineFLDDefault);
+LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault);
 
 
 
 // Front Logic Device (Jawa ID#1)
-//# LogicEngineDeathStarFLD<> FLD(LogicEngineFLDDefault, 1);
+//#LogicEngineDeathStarFLD<> FLD(LogicEngineFLDDefault, 1);
 
 // Rear Logic Device (Jawa ID#2)
-//# LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault, 2);
+//#LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault, 2);
 
 
 //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
@@ -161,12 +161,16 @@ void resetSequence()
         
     PSI_COM.print("0T1\r");   //PSI off
     DEBUG_PRINTLN("reset"); 
+
+    DEBUG_PRINTLN(FRONT_LOGIC_PIN); 
+    DEBUG_PRINTLN(REAR_LOGIC_PIN); 
+    
       
 }
 
 
 //#include "MarduinoHolo.h"
-//#include "MarcduinoSequence.h"
+#include "MarcduinoSequence.h"
 //#include "MarcduinoMagicPanel.h"
 #include "MarcduinoPanel.h"
 //#include "DomeButton.h"
@@ -188,7 +192,7 @@ void setup()
     
    // Wire.setClock(400000); //Set i2c frequency to 400 kHz.
 
-    //randomSeed(analogRead(3));
+    randomSeed(analogRead(3));
 
     // servoDispatch.setOutputEnablePin(OUTPUT_ENABLED_PIN, true);
     //servoDispatch.setClockCalibration((const uint32_t[]) { 27570000, 27190000 });
