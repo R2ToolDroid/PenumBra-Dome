@@ -30,6 +30,9 @@
  Left  Analog1   A0
  Right Analog2   A1
 
+
+#include "dome/Logics.h"
+#include "i2c/I2CReceiver.h"
   
  */
 
@@ -47,6 +50,8 @@
 //#define REAR_LOGIC_PIN 28
 
 #include "dome/Logics.h"   //HACK to switch PINs to different Position  FRONT 29 REAR 28 
+//#include "i2c/I2CReceiver.h"
+
 #include "dome/MagicPanel.h"   /// PIN 8 DATA | PIN 7 CLK | PIN 6 CS
 
 #define COMMAND_SERIAL Serial //   Serial1 for LIVE 
@@ -133,16 +138,16 @@ HoloLights topHolo(24, HoloLights::kRGB, HoloLights::kTopHolo);          // PIN 
 //HoloLights rearHolo(HP_REAR_LED_PIN, HoloLights::kRGBW, HoloLights::kRearHolo);
 //HoloLights topHolo(HP_TOP_LED_PIN, HoloLights::kRGB, HoloLights::kTopHolo, 12);
 
-LogicEngineDeathStarFLDInverted<> FLD(LogicEngineFLDDefault);
-LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault);
+//LogicEngineDeathStarFLDInverted<> FLD(LogicEngineFLDDefault);
+//LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault);
 
 
 
 // Front Logic Device (Jawa ID#1)
-//#LogicEngineDeathStarFLD<> FLD(LogicEngineFLDDefault, 1);
+LogicEngineDeathStarFLD<> FLD(LogicEngineFLDDefault, 1);
 
 // Rear Logic Device (Jawa ID#2)
-//#LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault, 2);
+LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault, 2);
 
 
 //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
