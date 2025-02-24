@@ -1,5 +1,5 @@
-#define USE_DEBUG 
-#define DEBUG_SERIAL
+//#define USE_DEBUG 
+//#define DEBUG_SERIAL
 //#define USE_SERVO_DEBUG
 //#define USE_HOLO_DEBUG
 
@@ -120,7 +120,8 @@ MagicPanel magicPanel;
 ServoDispatchPCA9685<SizeOfArray(servoSettings)> servoDispatch(servoSettings);
 ServoSequencer servoSequencer(servoDispatch);
 AnimationPlayer player(servoSequencer);
-JawaCommander<> jawaCommander;
+
+//JawaCommander<> jawaCommander;
 
 MarcduinoSerial<> marcduinoSerial(COMMAND_SERIAL, player);
 
@@ -209,7 +210,9 @@ void setup()
 
     //CommandEvent::process(F("HPF104"));  
     //servoDispatch.moveTo(0, 150, 1000, 1.0);  
+    
     CommandEvent::process(F("HPA199"));  //Twitch for all
+    
    //CommandEvent::process(F("HPS9|45"));
 
     CommandEvent::process("MP20005");

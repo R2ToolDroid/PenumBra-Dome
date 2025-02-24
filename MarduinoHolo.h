@@ -17,6 +17,7 @@ MARCDUINO_ACTION(HoloONN, 1, ({
     */
     
     CommandEvent::process(F("HPF0059"));
+    
 
     //CommandEvent::process(F("HPA0992"));
 }))
@@ -25,7 +26,7 @@ MARCDUINO_ACTION(HoloRes, 0, ({
 
     // Front Holo Dim cycle random color
    //frontHolo.moveHP(HoloLights::kUp, 500);
-   //CommandEvent::process(F("HPF007"));  //Short Circuit
+   CommandEvent::process(F("HPA198"));  //Alle Holos Auto twitch off
    resetSequence();
 }))
 
