@@ -39,15 +39,14 @@
 #include "ReelTwo.h"
 #include "core/Animation.h"
 #include "core/DelayCall.h"
-//#include "ServoDispatchDirect.h"
 #include "ServoDispatchPCA9685.h"
 #include "ServoSequencer.h"
 #include "core/Marcduino.h"
 
 #include "dome/HoloLights.h"
 
-//#define FRONT_LOGIC_PIN 29
-//#define REAR_LOGIC_PIN 28
+#define FRONT_LOGIC_PIN 29
+#define REAR_LOGIC_PIN 28
 
 #include "dome/Logics.h"   //HACK to switch PINs to different Position  FRONT 29 REAR 28 
 //#include "i2c/I2CReceiver.h"
@@ -120,12 +119,11 @@ const ServoSettings servoSettings[] PROGMEM = {
     
 };
 
-//ServoDispatchDirect<SizeOfArray(servoSettings)> servoDispatch(servoSettings);
-
 MagicPanel magicPanel;
 ServoDispatchPCA9685<SizeOfArray(servoSettings)> servoDispatch(servoSettings);
 ServoSequencer servoSequencer(servoDispatch);
 AnimationPlayer player(servoSequencer);
+
 MarcduinoSerial<> marcduinoSerial(COMMAND_SERIAL, player);
 
 
@@ -138,16 +136,16 @@ HoloLights topHolo(24, HoloLights::kRGB, HoloLights::kTopHolo);          // PIN 
 //HoloLights rearHolo(HP_REAR_LED_PIN, HoloLights::kRGBW, HoloLights::kRearHolo);
 //HoloLights topHolo(HP_TOP_LED_PIN, HoloLights::kRGB, HoloLights::kTopHolo, 12);
 
-//LogicEngineDeathStarFLDInverted<> FLD(LogicEngineFLDDefault);
-//LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault);
+LogicEngineDeathStarFLDInverted<> FLD(LogicEngineFLDDefault);
+LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault);
 
 
 
 // Front Logic Device (Jawa ID#1)
-LogicEngineDeathStarFLD<> FLD(LogicEngineFLDDefault, 1);
+//LogicEngineDeathStarFLD<> FLD(LogicEngineFLDDefault, 1);
 
 // Rear Logic Device (Jawa ID#2)
-LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault, 2);
+//LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault, 2);
 
 
 //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
@@ -174,11 +172,11 @@ void resetSequence()
 }
 
 
-//#include "MarduinoHolo.h"
+#include "MarduinoHolo.h"
 #include "MarcduinoSequence.h"
-//#include "MarcduinoMagicPanel.h"
+#include "MarcduinoMagicPanel.h"
 #include "MarcduinoPanel.h"
-//#include "DomeButton.h"
+#include "DomeButton.h"
 
 
 
@@ -207,18 +205,14 @@ void setup()
     frontHolo.assignServos(&servoDispatch, 0, 1);
     topHolo.assignServos(&servoDispatch, 2, 3);
     rearHolo.assignServos(&servoDispatch, 4, 5);
-
-
-    
+  
     PSI_COM.begin(2400);
-    
- 
 
     DEBUG_PRINTLN("ready.."); 
 
 
- //#   FLD.selectScrollTextLeft("R2 D2-\n-by Doc", LogicEngineRenderer::kBlue, 1, 5);
- //#   RLD.selectScrollTextLeft("... RSeries Doc Snyder ....", LogicEngineRenderer::kYellow, 0, 3);
+    FLD.selectScrollTextLeft("R2 D2-\n-by Doc", LogicEngineRenderer::kBlue, 1, 5);
+    RLD.selectScrollTextLeft("... RSeries Doc Snyder ....", LogicEngineRenderer::kYellow, 0, 3);
 
     //CommandEvent::process(F("HPF104"));  
     //servoDispatch.moveTo(0, 150, 1000, 1.0);  
@@ -460,8 +454,8 @@ D199    - Enables Auto HP Twitch
 
 */
 
-DEBUG_PRINTLN("Debug Serial:");
-DEBUG_PRINTLN(DEBUG_SERIAL);
+// DEBUG_PRINTLN("Debug Serial:");
+// DEBUG_PRINTLN(DEBUG_SERIAL);
 
 
 
@@ -474,7 +468,7 @@ void loop()
 {
     AnimatedEvent::process();
     
-   // DomeButton();
+    DomeButton();
 
 
 }
