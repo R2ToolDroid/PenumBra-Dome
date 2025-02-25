@@ -53,7 +53,7 @@
 
 #include "dome/MagicPanel.h"   /// PIN 8 DATA | PIN 7 CLK | PIN 6 CS
 
-#define COMMAND_SERIAL Serial //   Serial1 for LIVE 
+#define COMMAND_SERIAL Serial1 //   Serial1 for LIVE 
 
 //#ifdef RECEIVE_MARCDUINO_COMMANDS
 
@@ -177,6 +177,8 @@ void resetSequence()
 #include "MarcduinoMagicPanel.h"
 #include "MarcduinoPanel.h"
 #include "DomeButton.h"
+
+#include "Command.h"
 
 
 
@@ -461,7 +463,16 @@ D199    - Enables Auto HP Twitch
 
 }  /*END SETUP */
 
-
+////MAIN SERIAL READ
+void readCom(){
+  if(Serial.available() > 0)
+    {
+        data = Serial.readStringUntil('\n');
+        parseCommand(data);
+        data = "";
+        Serial.flush();
+    } // end serial
+}
 
 
 void loop()
