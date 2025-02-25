@@ -52,7 +52,9 @@
 
 #include "dome/MagicPanel.h"   /// PIN 8 DATA | PIN 7 CLK | PIN 6 CS
 
-#define COMMAND_SERIAL Serial1 //   Serial1 for LIVE 
+//#define COMMAND_SERIAL Serial1 //   Serial1 for LIVE 
+
+#define COM_SERIAL Serial //   Serial1 for LIVE 
 
 //#ifdef RECEIVE_MARCDUINO_COMMANDS
 
@@ -84,7 +86,7 @@
 #define PANEL_GROUP_9      (1L<<22)
 #define PANEL_GROUP_10     (1L<<23)
 
-
+String data;
 
 
 
@@ -121,8 +123,7 @@ ServoDispatchPCA9685<SizeOfArray(servoSettings)> servoDispatch(servoSettings);
 ServoSequencer servoSequencer(servoDispatch);
 AnimationPlayer player(servoSequencer);
 
-MarcduinoSerial<> marcduinoSerial(COMMAND_SERIAL, player);
-
+//MarcduinoSerial<> marcduinoSerial(COMMAND_SERIAL, player);
 
 
 HoloLights frontHolo(22,HoloLights::kRGB, HoloLights::kFrontHolo,12);        // PIN Dout1
@@ -160,10 +161,10 @@ void resetSequence()
         "MP00000"));    /// Magic off
         
     PSI_COM.print("0T1\r");   //PSI off
-    DEBUG_PRINTLN("reset"); 
+   // DEBUG_PRINTLN("reset"); 
 
-    DEBUG_PRINTLN(FRONT_LOGIC_PIN); 
-    DEBUG_PRINTLN(REAR_LOGIC_PIN); 
+   // DEBUG_PRINTLN(FRONT_LOGIC_PIN); 
+  //  DEBUG_PRINTLN(REAR_LOGIC_PIN); 
     
       
 }
@@ -188,7 +189,9 @@ void setup()
     REELTWO_READY();
     Wire.begin();
 
-    COMMAND_SERIAL.begin(9600);
+    //COMMAND_SERIAL.begin(9600);
+
+    COM_SERIAL.begin(9600);
 
     SetupEvent::ready();
     
@@ -456,27 +459,24 @@ D199    - Enables Auto HP Twitch
 // DEBUG_PRINTLN("Debug Serial:");
 // DEBUG_PRINTLN(DEBUG_SERIAL);
 
-
-
 }  /*END SETUP */
 
 ////MAIN SERIAL READ
 void readCom(){
-  if(Serial.available() > 0)
+  if(COM_SERIAL.available() > 0)
     {
-        data = Serial.readStringUntil('\n');
+        data = COM_SERIAL.readStringUntil('\n');
         parseCommand(data);
         data = "";
-        Serial.flush();
+        COM_SERIAL.flush();
     } // end serial
 }
 
 
 void loop()
 {
-    AnimatedEvent::process();
-    
+    AnimatedEvent::process();  
     DomeButton();
-
+    readCom();
 
 }
