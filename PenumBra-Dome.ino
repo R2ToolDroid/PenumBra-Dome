@@ -36,6 +36,8 @@
   
  */
 
+String data; 
+
 #include "ReelTwo.h"
 #include "core/Animation.h"
 #include "core/DelayCall.h"
@@ -54,6 +56,8 @@
 #include "dome/MagicPanel.h"   /// PIN 8 DATA | PIN 7 CLK | PIN 6 CS
 
 #define COMMAND_SERIAL Serial1 //   Serial1 for LIVE 
+
+#define COM_SERIAL Serial /// USB SerialCOM_SERIAL
 
 //#ifdef RECEIVE_MARCDUINO_COMMANDS
 
@@ -163,7 +167,7 @@ void resetSequence()
         "MP00000"));    /// Magic off
         
     PSI_COM.print("0T1\r");   //PSI off
-    DEBUG_PRINTLN("reset"); 
+    DEBUG_PRINTLN("reset"); COM
 
     DEBUG_PRINTLN(FRONT_LOGIC_PIN); 
     DEBUG_PRINTLN(REAR_LOGIC_PIN); 
@@ -192,6 +196,9 @@ void setup()
     Wire.begin();
 
     COMMAND_SERIAL.begin(9600);
+    
+    COM_SERIAL.begin(9600);
+    
 
     SetupEvent::ready();
     
@@ -464,21 +471,21 @@ D199    - Enables Auto HP Twitch
 }  /*END SETUP */
 
 ////MAIN SERIAL READ
+
 void readCom(){
-  if(Serial.available() > 0)
+  if(COM_SERIAL.available() > 0)
     {
-        data = Serial.readStringUntil('\n');
+        data = COM_SERIAL.readStringUntil('\n');
         parseCommand(data);
         data = "";
-        Serial.flush();
+        COM_SERIAL.flush();
     } // end serial
 }
 
 
 void loop()
 {
-    AnimatedEvent::process();
-    
+    AnimatedEvent::process();   
     DomeButton();
 
 
