@@ -167,8 +167,7 @@ void resetSequence()
         "MP00000"));    /// Magic off
         
     PSI_COM.print("0T1\r");   //PSI off
-    DEBUG_PRINTLN("reset"); COM
-
+    DEBUG_PRINTLN("reset"); 
     DEBUG_PRINTLN(FRONT_LOGIC_PIN); 
     DEBUG_PRINTLN(REAR_LOGIC_PIN); 
     
