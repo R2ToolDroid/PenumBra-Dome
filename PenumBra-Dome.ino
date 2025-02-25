@@ -33,10 +33,7 @@
 
 #include "dome/Logics.h"
 #include "i2c/I2CReceiver.h"
-  
  */
-
-String data; 
 
 #include "ReelTwo.h"
 #include "core/Animation.h"
@@ -57,8 +54,6 @@ String data;
 
 #define COMMAND_SERIAL Serial1 //   Serial1 for LIVE 
 
-#define COM_SERIAL Serial /// USB SerialCOM_SERIAL
-
 //#ifdef RECEIVE_MARCDUINO_COMMANDS
 
 #define PSI_COM Serial3 //  serial for PSI Pro
@@ -69,8 +64,6 @@ String data;
 #define MEDIUM_PANEL        0x0002
 #define BIG_PANEL           0x0004
 #define PIE_PANEL           0x0008
-
-
 
 #define HOLO_HSERVO        0x1000
 #define HOLO_VSERVO        0x2000
@@ -168,6 +161,7 @@ void resetSequence()
         
     PSI_COM.print("0T1\r");   //PSI off
     DEBUG_PRINTLN("reset"); 
+
     DEBUG_PRINTLN(FRONT_LOGIC_PIN); 
     DEBUG_PRINTLN(REAR_LOGIC_PIN); 
     
@@ -195,9 +189,6 @@ void setup()
     Wire.begin();
 
     COMMAND_SERIAL.begin(9600);
-    
-    COM_SERIAL.begin(9600);
-    
 
     SetupEvent::ready();
     
@@ -470,21 +461,21 @@ D199    - Enables Auto HP Twitch
 }  /*END SETUP */
 
 ////MAIN SERIAL READ
-
 void readCom(){
-  if(COM_SERIAL.available() > 0)
+  if(Serial.available() > 0)
     {
-        data = COM_SERIAL.readStringUntil('\n');
+        data = Serial.readStringUntil('\n');
         parseCommand(data);
         data = "";
-        COM_SERIAL.flush();
+        Serial.flush();
     } // end serial
 }
 
 
 void loop()
 {
-    AnimatedEvent::process();   
+    AnimatedEvent::process();
+    
     DomeButton();
 
 
