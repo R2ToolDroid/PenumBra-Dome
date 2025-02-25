@@ -53,7 +53,7 @@
 
 #include "dome/MagicPanel.h"   /// PIN 8 DATA | PIN 7 CLK | PIN 6 CS
 
-#define COMMAND_SERIAL Serial //   Serial1 for LIVE 
+#define COMMAND_SERIAL Serial1 //   Serial1 for LIVE 
 
 //#ifdef RECEIVE_MARCDUINO_COMMANDS
 
