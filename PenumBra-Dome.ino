@@ -152,6 +152,7 @@ LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault);
 
 void resetSequence()
 {
+   player.end();
    SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
 
    //servoDispatch.setServosEasingMethod(HOLO_SERVOS_MASK, Easing::CircularEaseIn);
