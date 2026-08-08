@@ -36,6 +36,11 @@ public:
 
     static void processCommand(AnimationPlayer& player, const char* cmd)
     {
+        // Log the incoming raw command for diagnostics
+        Serial.print("[MARCDUINO PROC] '");
+        Serial.print(cmd);
+        Serial.println("'");
+
         bool found = false;
         for (Marcduino* marc = *head(); marc != NULL; marc = marc->fNext)
         {
@@ -46,6 +51,11 @@ public:
                 AnimationStep animation = marc->fAnimation;
                 if (animation != NULL)
                 {
+                    // Log which command matched and the remaining args
+                    Serial.print("[MARCDUINO PROC] Matched rest='");
+                    Serial.print(cmd + len);
+                    Serial.println("'");
+
                     *command() = cmd + len;
                     player.animateOnce(animation);
                     found = true;
@@ -59,7 +69,15 @@ public:
             if (base != NULL)
             {
                 base->process(cmd+1);
+                found = true;
             }
+        }
+
+        if (!found)
+        {
+            Serial.print("[MARCDUINO PROC] NotFound '");
+            Serial.print(cmd);
+            Serial.println("'");
         }
     } 
 
@@ -126,7 +144,7 @@ public:
         fPlayer(player),
         fPos(0)
     {
-        // Enable debug echo by default for this repo-level override
+        // Keep echo enabled for debug by default in the debug branch
         fOutStream = &Serial;
     }
 
@@ -159,7 +177,7 @@ public:
             int ch = fStream->read();
             if (ch != -1)
             {
-                // Pass any bytes to the next stream (echo) if desired
+                // Echo incoming byte to debug stream if set
                 if (fOutStream != nullptr)
                 {
                     uint8_t buf = (uint8_t)ch;
@@ -170,6 +188,12 @@ public:
                 if (ch == '\r' || ch == '\n')
                 {
                     fBuffer[fPos] = '\0';
+
+                    // Log received buffer on terminator
+                    Serial.print("[MARCDUINO RX] '");
+                    Serial.print(fBuffer);
+                    Serial.println("'");
+
                     fPos = 0;
                     if (fBuffer[0] != '\0')
                     {
@@ -182,11 +206,9 @@ public:
                 }
                 else
                 {
-                    // Buffer overflow protection: drop current contents and log if possible
+                    // Buffer overflow protection: drop current contents and log
                     fPos = 0;
-#ifdef DEBUG_PRINTLN
-                    DEBUG_PRINTLN("MARCDUINO: RX buffer overflow");
-#endif
+                    Serial.println("[MARCDUINO RX] Buffer overflow - dropping data");
                 }
             }
         }
