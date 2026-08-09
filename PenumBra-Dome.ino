@@ -1,4 +1,4 @@
-//#define USE_DEBUG 
+#//#define USE_DEBUG 
 //#define DEBUG_SERIAL
 //#define USE_SERVO_DEBUG
 //#define USE_HOLO_DEBUG
@@ -163,7 +163,7 @@ const unsigned long INTERBYTE_TIMEOUT_MS = 30; // ms
 
 void pollSerial1AndQueue()
 {
-    if (COMMAND_SERIAL == nullptr) return;
+    // COMMAND_SERIAL is a HardwareSerial object, not a pointer — don't compare to nullptr
 
     // Drain available bytes quickly into rxBuf
     while (COMMAND_SERIAL.available()) {
@@ -277,10 +277,10 @@ void setup()
     Wire.begin();
 
     COMMAND_SERIAL.begin(9600);
-+    // Disable marcduinoSerial reading from the hardware serial since we
-+    // now use a dedicated poll+queue mechanism to avoid lost/fragmented
-+    // bytes when logging or processing is blocking.
-+    marcduinoSerial.setStream((Stream*)nullptr);
+    // Disable marcduinoSerial reading from the hardware serial since we
+    // now use a dedicated poll+queue mechanism to avoid lost/fragmented
+    // bytes when logging or processing is blocking.
+    marcduinoSerial.setStream(nullptr);
 
     SetupEvent::ready();
     
