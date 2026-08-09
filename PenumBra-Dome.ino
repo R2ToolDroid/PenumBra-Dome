@@ -1,5 +1,5 @@
-//#define USE_DEBUG 
-//#define DEBUG_SERIAL
+#define USE_DEBUG 
+#define DEBUG_SERIAL
 //#define USE_SERVO_DEBUG
 //#define USE_HOLO_DEBUG
 
@@ -53,7 +53,9 @@
 
 #include "dome/MagicPanel.h"   /// PIN 8 DATA | PIN 7 CLK | PIN 6 CS
 
-#define COMMAND_SERIAL Serial1 //   Serial1 for LIVE 
+//#define COMMAND_SERIAL Serial1 //   Serial1 for LIVE 
+
+#define COM_SERIAL Serial1 //   Serial1 for LIVE 
 
 //#ifdef RECEIVE_MARCDUINO_COMMANDS
 
@@ -124,7 +126,7 @@ ServoDispatchPCA9685<SizeOfArray(servoSettings)> servoDispatch(servoSettings);
 ServoSequencer servoSequencer(servoDispatch);
 AnimationPlayer player(servoSequencer);
 
-MarcduinoSerial<> marcduinoSerial(COMMAND_SERIAL, player);
+MarcduinoSerial<> marcduinoSerial(COM_SERIAL, player);
 
 
 
@@ -151,65 +153,29 @@ LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault);
 //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
 
 // === Command queue for Serial1 (COMMAND_SERIAL) ===
-#define CMD_QUEUE_SIZE 16
-#define CMD_MAX_LEN 96
-static char cmdQueue[CMD_QUEUE_SIZE][CMD_MAX_LEN];
-static volatile uint8_t cmdQueueHead = 0;
-static volatile uint8_t cmdQueueTail = 0;
+
+String data; //Serial Data
 
 
-void pollSerial1AndQueue()
-{
-    // Prefer readBytesUntil to collect a whole line with a small timeout to
-    // avoid per-byte processing overhead and to be robust when ReelTwo
-    // subroutines take time.
-    if (!COMMAND_SERIAL.available()) return;
-
-    char line[CMD_MAX_LEN];
-    size_t maxRead = CMD_MAX_LEN - 1;
-    // readBytesUntil blocks until '\r' or timeout; timeout set in setup()
-    int len = COMMAND_SERIAL.readBytesUntil('\r', line, maxRead);
-    if (len <= 0) {
-        // nothing read (timeout)
-        return;
-    }
-
-    // Trim trailing CR/LF/whitespace
-    while (len > 0 && (line[len-1] == '\r' || line[len-1] == '\n' || line[len-1] == ' ' || line[len-1] == '\t')) len--;
-    size_t start = 0;
-    while (start < (size_t)len && (line[start] == ' ' || line[start] == '\t')) start++;
-    size_t outLen = (start <= (size_t)len) ? (len - start) : 0;
-    if (outLen == 0) return;
-    memmove(line, line + start, outLen);
-    line[outLen] = '\0';
-
-    // enqueue
-    uint8_t nextTail = (cmdQueueTail + 1) % CMD_QUEUE_SIZE;
-    if (nextTail == cmdQueueHead) {
-        // queue full: drop oldest to make room
-        cmdQueueHead = (cmdQueueHead + 1) % CMD_QUEUE_SIZE;
-    }
-    strncpy(cmdQueue[cmdQueueTail], line, CMD_MAX_LEN - 1);
-    cmdQueue[cmdQueueTail][CMD_MAX_LEN - 1] = '\0';
-    cmdQueueTail = nextTail;
+void readCom(){
+  if(COM_SERIAL.available() > 0)
+    {
+        data = COM_SERIAL.readStringUntil('\r');
+        if (DEBUG_SERIAL){
+            Serial.println (F( "I received from COM Serial: "));
+            Serial.print(data);
+           
+        }
+        
+        Marcduino::processCommand(player, data);
+        data = "";
+        Serial.flush();
+    } // end serial
 }
 
-void processQueuedCommands()
-{
-    while (cmdQueueHead != cmdQueueTail) {
-        char cmd[CMD_MAX_LEN];
-        strcpy(cmd, cmdQueue[cmdQueueHead]);
-        cmdQueueHead = (cmdQueueHead + 1) % CMD_QUEUE_SIZE;
 
-#if defined(DEBUG_SERIAL) || defined(USE_DEBUG)
-        Serial.print("[CMD Q] ");
-        Serial.println(cmd);
-#endif
 
-        // Use Marcduino's command processor with the global player
-        Marcduino::processCommand(player, cmd);
-    }
-}
+
 
 
 void resetSequence()
@@ -315,16 +281,11 @@ void setup()
 
 void loop()
 {
-    // Fast receive (reads lines with small timeout)
-    pollSerial1AndQueue();
-
-    // Process queued commands (may trigger animations)
-    processQueuedCommands();
-
+    
     // Regular processing
     AnimatedEvent::process();
     
     DomeButton();
-
+    readCom();
 
 }
