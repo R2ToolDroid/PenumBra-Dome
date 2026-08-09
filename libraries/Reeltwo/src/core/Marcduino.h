@@ -234,65 +234,78 @@ public:
 
     virtual void animate()
     {
-        if (fStream != nullptr && fStream->available())
+        if (fStream == nullptr) return;
+
+        // Read and process all available bytes in one go to avoid
+        // inter-byte delays causing dropped or partial buffers.
+        while (fStream->available())
         {
             int ch = fStream->read();
-            if (ch != -1)
-            {
+            if (ch == -1) break;
+
 #if defined(DEBUG_SERIAL) || defined(USE_DEBUG)
-                // Log every received byte (hex + ASCII when printable)
-                Serial.print("RXBYTE 0x");
-                if (ch < 16) Serial.print('0');
-                Serial.print(ch, HEX);
-                Serial.print(" '");
-                if (ch >= 32 && ch <= 126)
-                    Serial.print((char)ch);
-                else if (ch == '\r')
-                    Serial.print("\\r");
-                else if (ch == '\n')
-                    Serial.print("\\n");
-                else
-                    Serial.print('.');
-                Serial.println("'");
+            // Log every received byte (hex + ASCII when printable)
+            Serial.print("RXBYTE 0x");
+            if (ch < 16) Serial.print('0');
+            Serial.print(ch, HEX);
+            Serial.print(" '");
+            if (ch >= 32 && ch <= 126)
+                Serial.print((char)ch);
+            else if (ch == '\r')
+                Serial.print("\\r");
+            else if (ch == '\n')
+                Serial.print("\\n");
+            else
+                Serial.print('.');
+            Serial.println("'");
 #endif
 
-                // Echo incoming byte to debug stream if set
-                if (fOutStream != nullptr)
+            // Echo incoming byte to debug stream if set, but only if there's buffer
+            // space to avoid blocking and possible receiver starvation.
+            if (fOutStream != nullptr)
+            {
+#if defined(HAVE_STREAM_AVAILABLEFORWRITE)
+                if (fOutStream->availableForWrite && fOutStream->availableForWrite() > 0)
                 {
                     uint8_t buf = (uint8_t)ch;
                     fOutStream->write(&buf, 1);
                 }
+#else
+                // Fallback: attempt non-blocking write if possible (best-effort)
+                uint8_t buf = (uint8_t)ch;
+                fOutStream->write(&buf, 1);
+#endif
+            }
 
-                // Accept CR or LF as terminator. This handles CR, LF, and CR+LF
-                if (ch == '\r' || ch == '\n')
-                {
+            // Accept CR or LF as terminator. This handles CR, LF, and CR+LF
+            if (ch == '\r' || ch == '\n')
+            {
 #if defined(DEBUG_SERIAL) || defined(USE_DEBUG)
-                    fBuffer[fPos] = '\0';
+                fBuffer[fPos] = '\0';
 
-                    // Log received buffer on terminator
-                    Serial.print("[MARCDUINO RX] '");
-                    Serial.print(fBuffer);
-                    Serial.println("'");
+                // Log received buffer on terminator
+                Serial.print("[MARCDUINO RX] '");
+                Serial.print(fBuffer);
+                Serial.println("'");
 #endif
 
-                    fPos = 0;
-                    if (fBuffer[0] != '\0')
-                    {
-                        Marcduino::processCommand(fPlayer, fBuffer);
-                    }
-                }
-                else if (fPos < SizeOfArray(fBuffer)-1)
+                fPos = 0;
+                if (fBuffer[0] != '\0')
                 {
-                    fBuffer[fPos++] = ch;
+                    Marcduino::processCommand(fPlayer, fBuffer);
                 }
-                else
-                {
-                    // Buffer overflow protection: drop current contents and log
-                    fPos = 0;
+            }
+            else if (fPos < SizeOfArray(fBuffer)-1)
+            {
+                fBuffer[fPos++] = ch;
+            }
+            else
+            {
+                // Buffer overflow protection: drop current contents and log
+                fPos = 0;
 #if defined(DEBUG_SERIAL) || defined(USE_DEBUG)
-                    Serial.println("[MARCDUINO RX] Buffer overflow - dropping data");
+                Serial.println("[MARCDUINO RX] Buffer overflow - dropping data");
 #endif
-                }
             }
         }
     }
