@@ -5,6 +5,11 @@
 #include "core/Animation.h"
 #include "core/JawaCommander.h"
 
+// If you really need raw byte echo back to the debug Serial, define this.
+// By default raw echo is DISABLED because it interleaves with text logs and
+// can introduce blocking that breaks reliable reading of the incoming stream.
+// #define MARCDUINO_ENABLE_RAW_ECHO
+
 #define MARCDUINO_ANIMATION(name, marc) \
     ANIMATION_FUNC_DECL(name); \
     const char _marc_msg_##name[] PROGMEM = #marc; \
@@ -184,7 +189,10 @@ private:
     }
 };
 
-// MarcduinoSerial unchanged from previous debug instrumentation version
+// MarcduinoSerial: read all available bytes each animate() to avoid
+// inter-byte gaps causing partial buffers. Do not raw-echo back to the
+// debug Serial by default; raw echo can interleave with logging and
+// introduce delays that break reliable reception.
 
 template<uint16_t BUFFER_SIZE=64> class MarcduinoSerial : public AnimatedEvent
 {
@@ -194,12 +202,8 @@ public:
         fPlayer(player),
         fPos(0)
     {
-#if defined(DEBUG_SERIAL) || defined(USE_DEBUG)
-        // Enable debug echo when requested
-        fOutStream = &Serial;
-#else
+        // Do not set fOutStream here to avoid automatic raw echo to USB
         fOutStream = nullptr;
-#endif
     }
 
     MarcduinoSerial(Stream* stream, AnimationPlayer &player) :
@@ -207,11 +211,7 @@ public:
         fPlayer(player),
         fPos(0)
     {
-#if defined(DEBUG_SERIAL) || defined(USE_DEBUG)
-        fOutStream = &Serial;
-#else
         fOutStream = nullptr;
-#endif
     }
 
     MarcduinoSerial(AnimationPlayer &player) :
@@ -219,16 +219,13 @@ public:
         fPlayer(player),
         fPos(0)
     {
-#if defined(DEBUG_SERIAL) || defined(USE_DEBUG)
-        fOutStream = &Serial;
-#else
         fOutStream = nullptr;
-#endif
     }
 
     void setStream(Stream* stream, Stream* outStream = nullptr)
     {
         fStream = stream;
+        // outStream can be provided explicitly if the caller really wants raw echo
         fOutStream = outStream;
     }
 
@@ -236,14 +233,18 @@ public:
     {
         if (fStream == nullptr) return;
 
-        // Read and process all available bytes in one go to avoid
-        // inter-byte delays causing dropped or partial buffers.
+        // Drain all available bytes to minimize chance of splitting commands
         while (fStream->available())
         {
             int ch = fStream->read();
             if (ch == -1) break;
 
 #if defined(DEBUG_SERIAL) || defined(USE_DEBUG)
+            // Add a timestamp so we can spot inter-byte delays
+            Serial.print("[");
+            Serial.print(micros());
+            Serial.print("] ");
+
             // Log every received byte (hex + ASCII when printable)
             Serial.print("RXBYTE 0x");
             if (ch < 16) Serial.print('0');
@@ -260,22 +261,15 @@ public:
             Serial.println("'");
 #endif
 
-            // Echo incoming byte to debug stream if set, but only if there's buffer
-            // space to avoid blocking and possible receiver starvation.
+            // Optional raw echo (only if explicit outStream provided and the
+            // caller knows the tradeoffs). Controlled by setStream(outStream).
+#ifdef MARCDUINO_ENABLE_RAW_ECHO
             if (fOutStream != nullptr)
             {
-#if defined(HAVE_STREAM_AVAILABLEFORWRITE)
-                if (fOutStream->availableForWrite && fOutStream->availableForWrite() > 0)
-                {
-                    uint8_t buf = (uint8_t)ch;
-                    fOutStream->write(&buf, 1);
-                }
-#else
-                // Fallback: attempt non-blocking write if possible (best-effort)
                 uint8_t buf = (uint8_t)ch;
                 fOutStream->write(&buf, 1);
-#endif
             }
+#endif
 
             // Accept CR or LF as terminator. This handles CR, LF, and CR+LF
             if (ch == '\r' || ch == '\n')
@@ -283,7 +277,7 @@ public:
 #if defined(DEBUG_SERIAL) || defined(USE_DEBUG)
                 fBuffer[fPos] = '\0';
 
-                // Log received buffer on terminator
+                // Log received buffer on terminator (also include hex dump)
                 Serial.print("[MARCDUINO RX] '");
                 Serial.print(fBuffer);
                 Serial.println("'");
