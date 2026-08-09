@@ -150,6 +150,83 @@ LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault);
 
 //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
 
+// === Command queue for Serial1 (COMMAND_SERIAL) ===
+#define CMD_QUEUE_SIZE 8
+#define CMD_MAX_LEN 64
+static char cmdQueue[CMD_QUEUE_SIZE][CMD_MAX_LEN];
+static volatile uint8_t cmdQueueHead = 0;
+static volatile uint8_t cmdQueueTail = 0;
+static char rxBuf[CMD_MAX_LEN];
+static size_t rxPos = 0;
+static unsigned long lastByteMs = 0;
+const unsigned long INTERBYTE_TIMEOUT_MS = 30; // ms
+
+void pollSerial1AndQueue()
+{
+    if (COMMAND_SERIAL == nullptr) return;
+
+    // Drain available bytes quickly into rxBuf
+    while (COMMAND_SERIAL.available()) {
+        int c = COMMAND_SERIAL.read();
+        if (c < 0) break;
+        lastByteMs = millis();
+
+        if (c == '\r' || c == '\n') {
+            if (rxPos > 0) {
+                rxBuf[rxPos] = '\0';
+                uint8_t nextTail = (cmdQueueTail + 1) % CMD_QUEUE_SIZE;
+                if (nextTail == cmdQueueHead) {
+                    // queue full: drop oldest to make room
+                    cmdQueueHead = (cmdQueueHead + 1) % CMD_QUEUE_SIZE;
+                }
+                strncpy(cmdQueue[cmdQueueTail], rxBuf, CMD_MAX_LEN - 1);
+                cmdQueue[cmdQueueTail][CMD_MAX_LEN - 1] = '\0';
+                cmdQueueTail = nextTail;
+                rxPos = 0;
+            }
+            // else ignore consecutive terminators
+        } else {
+            if (rxPos < CMD_MAX_LEN - 1) {
+                rxBuf[rxPos++] = (char)c;
+            } else {
+                // overflow: reset
+                rxPos = 0;
+            }
+        }
+    }
+
+    // If partial data exists but no terminator arrived and timeout expired -> enqueue
+    if (rxPos > 0 && (millis() - lastByteMs) > INTERBYTE_TIMEOUT_MS) {
+        rxBuf[rxPos] = '\0';
+        uint8_t nextTail = (cmdQueueTail + 1) % CMD_QUEUE_SIZE;
+        if (nextTail == cmdQueueHead) {
+            cmdQueueHead = (cmdQueueHead + 1) % CMD_QUEUE_SIZE;
+        }
+        strncpy(cmdQueue[cmdQueueTail], rxBuf, CMD_MAX_LEN - 1);
+        cmdQueue[cmdQueueTail][CMD_MAX_LEN - 1] = '\0';
+        cmdQueueTail = nextTail;
+        rxPos = 0;
+    }
+}
+
+void processQueuedCommands()
+{
+    while (cmdQueueHead != cmdQueueTail) {
+        char cmd[CMD_MAX_LEN];
+        strcpy(cmd, cmdQueue[cmdQueueHead]);
+        cmdQueueHead = (cmdQueueHead + 1) % CMD_QUEUE_SIZE;
+
+#if defined(DEBUG_SERIAL) || defined(USE_DEBUG)
+        Serial.print("[CMD Q] ");
+        Serial.println(cmd);
+#endif
+
+        // Use Marcduino's command processor with the global player
+        Marcduino::processCommand(player, cmd);
+    }
+}
+
+
 void resetSequence()
 {
    // ensure any running Marcduino animation is terminated immediately
@@ -248,6 +325,13 @@ void setup()
 
 void loop()
 {
+    // Fast, non-blocking serial receive and queuing
+    pollSerial1AndQueue();
+
+    // Process queued commands (can be longer-running)
+    processQueuedCommands();
+
+    // Regular processing
     AnimatedEvent::process();
     
     DomeButton();
