@@ -1,4 +1,4 @@
-#//#define USE_DEBUG 
+//#define USE_DEBUG 
 //#define DEBUG_SERIAL
 //#define USE_SERVO_DEBUG
 //#define USE_HOLO_DEBUG
@@ -151,62 +151,47 @@ LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault);
 //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
 
 // === Command queue for Serial1 (COMMAND_SERIAL) ===
-#define CMD_QUEUE_SIZE 8
-#define CMD_MAX_LEN 64
+#define CMD_QUEUE_SIZE 16
+#define CMD_MAX_LEN 96
 static char cmdQueue[CMD_QUEUE_SIZE][CMD_MAX_LEN];
 static volatile uint8_t cmdQueueHead = 0;
 static volatile uint8_t cmdQueueTail = 0;
-static char rxBuf[CMD_MAX_LEN];
-static size_t rxPos = 0;
-static unsigned long lastByteMs = 0;
-const unsigned long INTERBYTE_TIMEOUT_MS = 30; // ms
+
 
 void pollSerial1AndQueue()
 {
-    // COMMAND_SERIAL is a HardwareSerial object, not a pointer — don't compare to nullptr
+    // Prefer readBytesUntil to collect a whole line with a small timeout to
+    // avoid per-byte processing overhead and to be robust when ReelTwo
+    // subroutines take time.
+    if (!COMMAND_SERIAL.available()) return;
 
-    // Drain available bytes quickly into rxBuf
-    while (COMMAND_SERIAL.available()) {
-        int c = COMMAND_SERIAL.read();
-        if (c < 0) break;
-        lastByteMs = millis();
-
-        if (c == '\r' || c == '\n') {
-            if (rxPos > 0) {
-                rxBuf[rxPos] = '\0';
-                uint8_t nextTail = (cmdQueueTail + 1) % CMD_QUEUE_SIZE;
-                if (nextTail == cmdQueueHead) {
-                    // queue full: drop oldest to make room
-                    cmdQueueHead = (cmdQueueHead + 1) % CMD_QUEUE_SIZE;
-                }
-                strncpy(cmdQueue[cmdQueueTail], rxBuf, CMD_MAX_LEN - 1);
-                cmdQueue[cmdQueueTail][CMD_MAX_LEN - 1] = '\0';
-                cmdQueueTail = nextTail;
-                rxPos = 0;
-            }
-            // else ignore consecutive terminators
-        } else {
-            if (rxPos < CMD_MAX_LEN - 1) {
-                rxBuf[rxPos++] = (char)c;
-            } else {
-                // overflow: reset
-                rxPos = 0;
-            }
-        }
+    char line[CMD_MAX_LEN];
+    size_t maxRead = CMD_MAX_LEN - 1;
+    // readBytesUntil blocks until '\r' or timeout; timeout set in setup()
+    int len = COMMAND_SERIAL.readBytesUntil('\r', line, maxRead);
+    if (len <= 0) {
+        // nothing read (timeout)
+        return;
     }
 
-    // If partial data exists but no terminator arrived and timeout expired -> enqueue
-    if (rxPos > 0 && (millis() - lastByteMs) > INTERBYTE_TIMEOUT_MS) {
-        rxBuf[rxPos] = '\0';
-        uint8_t nextTail = (cmdQueueTail + 1) % CMD_QUEUE_SIZE;
-        if (nextTail == cmdQueueHead) {
-            cmdQueueHead = (cmdQueueHead + 1) % CMD_QUEUE_SIZE;
-        }
-        strncpy(cmdQueue[cmdQueueTail], rxBuf, CMD_MAX_LEN - 1);
-        cmdQueue[cmdQueueTail][CMD_MAX_LEN - 1] = '\0';
-        cmdQueueTail = nextTail;
-        rxPos = 0;
+    // Trim trailing CR/LF/whitespace
+    while (len > 0 && (line[len-1] == '\r' || line[len-1] == '\n' || line[len-1] == ' ' || line[len-1] == '\t')) len--;
+    size_t start = 0;
+    while (start < (size_t)len && (line[start] == ' ' || line[start] == '\t')) start++;
+    size_t outLen = (start <= (size_t)len) ? (len - start) : 0;
+    if (outLen == 0) return;
+    memmove(line, line + start, outLen);
+    line[outLen] = '\0';
+
+    // enqueue
+    uint8_t nextTail = (cmdQueueTail + 1) % CMD_QUEUE_SIZE;
+    if (nextTail == cmdQueueHead) {
+        // queue full: drop oldest to make room
+        cmdQueueHead = (cmdQueueHead + 1) % CMD_QUEUE_SIZE;
     }
+    strncpy(cmdQueue[cmdQueueTail], line, CMD_MAX_LEN - 1);
+    cmdQueue[cmdQueueTail][CMD_MAX_LEN - 1] = '\0';
+    cmdQueueTail = nextTail;
 }
 
 void processQueuedCommands()
@@ -277,10 +262,11 @@ void setup()
     Wire.begin();
 
     COMMAND_SERIAL.begin(9600);
-    // Disable marcduinoSerial reading from the hardware serial since we
-    // now use a dedicated poll+queue mechanism to avoid lost/fragmented
-    // bytes when logging or processing is blocking.
-    marcduinoSerial.setStream(nullptr);
+    // small timeout for readBytesUntil()
+    COMMAND_SERIAL.setTimeout(20); // ms; tune between 10..50
+
+    // Ensure only our poller reads the hardware serial
+    marcduinoSerial.setStream((Stream*)nullptr);
 
     SetupEvent::ready();
     
@@ -329,10 +315,10 @@ void setup()
 
 void loop()
 {
-    // Fast, non-blocking serial receive and queuing
+    // Fast receive (reads lines with small timeout)
     pollSerial1AndQueue();
 
-    // Process queued commands (can be longer-running)
+    // Process queued commands (may trigger animations)
     processQueuedCommands();
 
     // Regular processing
