@@ -126,7 +126,7 @@ ServoDispatchPCA9685<SizeOfArray(servoSettings)> servoDispatch(servoSettings);
 ServoSequencer servoSequencer(servoDispatch);
 AnimationPlayer player(servoSequencer);
 
-MarcduinoSerial<> marcduinoSerial(COM_SERIAL, player);
+//MarcduinoSerial<> marcduinoSerial(COM_SERIAL, player);
 
 
 
@@ -154,7 +154,7 @@ LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault);
 
 // === Command queue for Serial1 (COMMAND_SERIAL) ===
 
-String data; //Serial Data
+char* data; //Serial Data
 
 
 void readCom(){
@@ -227,12 +227,12 @@ void setup()
 
     Wire.begin();
 
-    COMMAND_SERIAL.begin(9600);
+    COM_SERIAL.begin(9600);
     // small timeout for readBytesUntil()
-    COMMAND_SERIAL.setTimeout(20); // ms; tune between 10..50
+    //COMMAND_SERIAL.setTimeout(20); // ms; tune between 10..50
 
     // Ensure only our poller reads the hardware serial
-    marcduinoSerial.setStream((Stream*)nullptr);
+    //marcduinoSerial.setStream((Stream*)nullptr);
 
     SetupEvent::ready();
     
@@ -284,7 +284,6 @@ void loop()
     
     // Regular processing
     AnimatedEvent::process();
-    
     DomeButton();
     readCom();
 
