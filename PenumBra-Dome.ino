@@ -1,7 +1,37 @@
-#define USE_DEBUG 
-#define DEBUG_SERIAL
-//#define USE_SERVO_DEBUG
+//#define USE_DEBUG 
+//#define DEBUG_SERIAL Serial 
 //#define USE_HOLO_DEBUG
+
+// Echo fully received Serial1 commands to the USB serial monitor without
+// enabling the verbose Reeltwo debug output.
+#define COMMAND_RX_TRACE
+//#define SERIAL3_LOOPBACK_TEST
+
+// Test switches retained for future diagnostics. Keep all disabled in normal
+// operation.
+//#define SERIAL3_RX_ONLY_TEST
+//#define SERIAL3_RX_ANIMATED_TEST
+//#define SERIAL3_RX_SKIP_HOLOS_TEST
+
+#if defined(COMMAND_RX_TRACE)
+#define SETUP_TRACE(message) Serial.println(F(message))
+#else
+#define SETUP_TRACE(message)
+#endif
+
+struct CommandRxDiagnostics
+{
+    uint16_t bytes = 0;
+    uint16_t lines = 0;
+    uint16_t lineOverflows = 0;
+    uint8_t maxPending = 0;
+    uint8_t raw[8] = {};
+    uint8_t rawCount = 0;
+    uint16_t rawDropped = 0;
+};
+
+CommandRxDiagnostics commandRxDiagnostics;
+static uint32_t lastComByteMicros;
 
 //Penumbra Mega PIN Mapping
 //SV1-12 2-13
@@ -55,11 +85,11 @@
 
 //#define COMMAND_SERIAL Serial1 //   Serial1 for LIVE 
 
-#define COM_SERIAL Serial1 //   Serial1 for LIVE 
+#define COM_SERIAL Serial3 //   Serial1 for LIVE 
 
 //#ifdef RECEIVE_MARCDUINO_COMMANDS
 
-#define PSI_COM Serial3 //  serial for PSI Pro
+#define PSI_COM Serial2 //  serial3 for PSI Pro
 #define DOME_BTN_L A0
 #define DOME_BTN_R A1
 
@@ -152,25 +182,125 @@ LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault);
 
 //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
 
-// === Command queue for Serial1 (COMMAND_SERIAL) ===
+// === Command queue for Serial1 (COM_SERIAL) ===
 
-char* data; //Serial Data
+void readCom()
+{
+    static char data[96];
+    static uint8_t length = 0;
 
+    const int pending = COM_SERIAL.available();
+    if (pending > commandRxDiagnostics.maxPending)
+        commandRxDiagnostics.maxPending = pending;
 
-void readCom(){
-  if(COM_SERIAL.available() > 0)
+    while (COM_SERIAL.available() > 0)
     {
-        data = COM_SERIAL.readStringUntil('\r');
-        if (DEBUG_SERIAL){
-            Serial.println (F( "I received from COM Serial: "));
-            Serial.print(data);
-           
+        const int received = COM_SERIAL.read();
+        lastComByteMicros = micros();
+        commandRxDiagnostics.bytes++;
+        if (commandRxDiagnostics.rawCount < sizeof(commandRxDiagnostics.raw))
+            commandRxDiagnostics.raw[commandRxDiagnostics.rawCount++] = received;
+        else
+            commandRxDiagnostics.rawDropped++;
+        if (received == '\r' || received == '\n')
+        {
+            if (length == 0)
+                continue;
+
+            data[length] = '\0';
+            commandRxDiagnostics.lines++;
+#if defined(COMMAND_RX_TRACE)
+            // Do not wait for a full USB TX buffer; receive timing wins over tracing.
+            if (Serial.availableForWrite() >= length + 2)
+            {
+                Serial.write('>');
+                Serial.write(data, length);
+                Serial.write('\n');
+            }
+#endif
+#if !defined(SERIAL3_RX_ONLY_TEST)
+            Marcduino::processCommand(player, data);
+#endif
+            length = 0;
         }
-        
-        Marcduino::processCommand(player, data);
-        data = "";
-        Serial.flush();
-    } // end serial
+        else if (length < sizeof(data) - 1)
+        {
+            data[length++] = static_cast<char>(received);
+        }
+        else
+        {
+            // Discard an oversized command instead of overrunning the buffer.
+            commandRxDiagnostics.lineOverflows++;
+            length = 0;
+        }
+    }
+}
+
+void reportComDiagnostics()
+{
+#if defined(COMMAND_RX_TRACE)
+    static uint32_t lastReport;
+    if ((lastReport != 0 && millis() - lastReport < 1000) || Serial.availableForWrite() < 60)
+        return;
+
+    Serial.print(F("RX B="));
+    Serial.print(commandRxDiagnostics.bytes);
+    Serial.print(F(" L="));
+    Serial.print(commandRxDiagnostics.lines);
+    Serial.print(F(" max="));
+    Serial.print(commandRxDiagnostics.maxPending);
+    Serial.print(F(" overflow="));
+    Serial.print(commandRxDiagnostics.lineOverflows);
+    Serial.print(F(" raw="));
+    for (uint8_t i = 0; i < commandRxDiagnostics.rawCount; i++)
+    {
+        if (commandRxDiagnostics.raw[i] < 16)
+            Serial.write('0');
+        Serial.print(commandRxDiagnostics.raw[i], HEX);
+        Serial.write(' ');
+    }
+    if (commandRxDiagnostics.rawDropped != 0)
+    {
+        Serial.write('+');
+        Serial.print(commandRxDiagnostics.rawDropped);
+    }
+    Serial.println();
+
+    commandRxDiagnostics = {};
+    lastReport = millis();
+#endif
+}
+
+void sendSerial3Loopback()
+{
+#if defined(SERIAL3_LOOPBACK_TEST)
+    static uint32_t lastSend;
+    if (millis() - lastSend >= 1000)
+    {
+        // This is intentionally not a Marcduino command.
+        COM_SERIAL.print(F("!LB00\r"));
+        lastSend = millis();
+    }
+#endif
+}
+
+void processAnimatedEvents()
+{
+    // These are the non-HoloLights AnimatedEvent instances constructed by this
+    // sketch. They do not use a NeoPixel bitstream.
+    magicPanel.animate();
+    servoSequencer.animate();
+    player.animate();
+
+    // Adafruit_NeoPixel::show() temporarily masks AVR interrupts. Do not run
+    // a HoloLights frame while a Serial3 command is being received; at 9600
+    // baud the 4 ms quiet period is longer than the gap between command bytes.
+    if ((uint32_t)(micros() - lastComByteMicros) >= 4000UL)
+    {
+        frontHolo.animate();
+        rearHolo.animate();
+        topHolo.animate();
+    }
 }
 
 
@@ -219,13 +349,18 @@ void setup()
 
     REELTWO_READY();
 
-#if defined(DEBUG_SERIAL) || defined(USE_DEBUG)
-    // Ensure USB Serial initialized for debug logs
+#if defined(DEBUG_SERIAL) || defined(USE_DEBUG) || defined(COMMAND_RX_TRACE)
+    // USB Serial is used for optional debug output and command tracing.
     Serial.begin(115200);
     delay(10);
+#if defined(COMMAND_RX_TRACE)
+    Serial.println(F("COMMAND TRACE READY"));
+#endif
 #endif
 
+    SETUP_TRACE("SETUP: Wire.begin");
     Wire.begin();
+    SETUP_TRACE("SETUP: COM begin");
 
     COM_SERIAL.begin(9600);
     // small timeout for readBytesUntil()
@@ -234,6 +369,7 @@ void setup()
     // Ensure only our poller reads the hardware serial
     //marcduinoSerial.setStream((Stream*)nullptr);
 
+    // Normal Reeltwo setup: initialize every registered setup component.
     SetupEvent::ready();
     
    // Wire.setClock(400000); //Set i2c frequency to 400 kHz.
@@ -248,8 +384,10 @@ void setup()
     frontHolo.assignServos(&servoDispatch, 0, 1);
     topHolo.assignServos(&servoDispatch, 2, 3);
     rearHolo.assignServos(&servoDispatch, 4, 5);
+    SETUP_TRACE("SETUP: holos assigned");
   
     PSI_COM.begin(2400);
+    SETUP_TRACE("SETUP: PSI serial ready");
 
 #if defined(DEBUG_SERIAL) || defined(USE_DEBUG)
     DEBUG_PRINTLN("ready.."); 
@@ -262,16 +400,18 @@ void setup()
     //CommandEvent::process(F("HPF104"));  
     //servoDispatch.moveTo(0, 150, 1000, 1.0);  
     
-    CommandEvent::process(F("HPA199"));  //Twitch for all
+    CommandEvent::process(F("HPA199"));  // Twitch for all
     
    //CommandEvent::process(F("HPS9|45"));
 
     CommandEvent::process("MP20005");
+    SETUP_TRACE("SETUP: magic command");
     //servoDispatch.setServosEasingMethod(ALL_DOME_PANELS_MASK, Easing::BounceEaseOut);
     //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
 
     //servoDispatch.setServosEasingMethod(HOLO_SERVOS_MASK, Easing::CircularEaseIn);
     SEQUENCE_PLAY_ONCE_SPEED(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK, 2000);
+    SETUP_TRACE("SETUP: complete");
 
     //PSI_COM.print("0T2\r");
 
@@ -281,10 +421,17 @@ void setup()
 
 void loop()
 {
-    
+    readCom();
+    reportComDiagnostics();
+#if !defined(SERIAL3_RX_ONLY_TEST)
     // Regular processing
-    AnimatedEvent::process();
+    processAnimatedEvents();
     DomeButton();
     readCom();
+    sendSerial3Loopback();
+#elif defined(SERIAL3_RX_ANIMATED_TEST)
+    // Keep the command parser and button code out of this test.
+    processAnimatedEvents();
+#endif
 
 }

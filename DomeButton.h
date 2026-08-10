@@ -256,7 +256,7 @@ void CheckBtnState(){
     if ((analogRead(DOME_BTN_R) >= 60)&& ( BtnR_Pressed == true))
     {
       //Serial.println(" Button Right relased");
-      BtnR == false;
+      BtnR = false;
       BtnR_Pressed = false;
     }
 
@@ -270,7 +270,7 @@ void CheckBtnState(){
     if ((analogRead(DOME_BTN_L) >= 60)&& ( BtnL_Pressed == true))
     {
       //Serial.println(" Button Left relased");
-      BtnL == false;  //before false
+      BtnL = false;  //before false
       BtnL_Pressed = false;
     }
     
