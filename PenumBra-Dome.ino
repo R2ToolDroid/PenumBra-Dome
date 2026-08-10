@@ -33,6 +33,9 @@ struct CommandRxDiagnostics
 CommandRxDiagnostics commandRxDiagnostics;
 static uint32_t lastComByteMicros;
 
+// Capture AVR reset flags before the normal runtime can change them.
+uint8_t resetFlags __attribute__((section(".noinit")));
+
 //Penumbra Mega PIN Mapping
 //SV1-12 2-13
 //Dout 1-8  22-29
@@ -67,6 +70,7 @@ static uint32_t lastComByteMicros;
  */
 
 #include "ReelTwo.h"
+#include <avr/wdt.h>
 #include "core/Animation.h"
 #include "core/DelayCall.h"
 #include "ServoDispatchPCA9685.h"
@@ -82,6 +86,27 @@ static uint32_t lastComByteMicros;
 //#include "i2c/I2CReceiver.h"
 
 #include "dome/MagicPanel.h"   /// PIN 8 DATA | PIN 7 CLK | PIN 6 CS
+
+void captureResetFlags(void) __attribute__((naked, used, section(".init3")));
+void captureResetFlags(void)
+{
+    resetFlags = MCUSR;
+    MCUSR = 0;
+    wdt_disable();
+}
+
+void printResetCause()
+{
+#if defined(COMMAND_RX_TRACE)
+    Serial.print(F("RESET: "));
+    if (resetFlags & _BV(PORF)) Serial.print(F("power "));
+    if (resetFlags & _BV(EXTRF)) Serial.print(F("external "));
+    if (resetFlags & _BV(BORF)) Serial.print(F("brown-out "));
+    if (resetFlags & _BV(WDRF)) Serial.print(F("watchdog "));
+    if (resetFlags == 0) Serial.print(F("unknown"));
+    Serial.println();
+#endif
+}
 
 //#define COMMAND_SERIAL Serial1 //   Serial1 for LIVE 
 
@@ -219,7 +244,11 @@ void readCom()
             }
 #endif
 #if !defined(SERIAL3_RX_ONLY_TEST)
+            // Keep Marcduino aliases (:SE00, #ON00, ...) and native Reeltwo
+            // commands (HPA..., HPF..., LE..., MP...) available on the same
+            // serial input. Non-matching commands are ignored by each layer.
             Marcduino::processCommand(player, data);
+            CommandEvent::process(data);
 #endif
             length = 0;
         }
@@ -355,6 +384,7 @@ void setup()
     delay(10);
 #if defined(COMMAND_RX_TRACE)
     Serial.println(F("COMMAND TRACE READY"));
+    printResetCause();
 #endif
 #endif
 
@@ -400,7 +430,10 @@ void setup()
     //CommandEvent::process(F("HPF104"));  
     //servoDispatch.moveTo(0, 150, 1000, 1.0);  
     
-    CommandEvent::process(F("HPA199"));  // Twitch for all
+    // Do not start the random all-holo twitch during boot. It caused a reset
+    // loop on this Mega configuration. The same HPA199 function remains
+    // available when it is explicitly requested by a command.
+    // CommandEvent::process(F("HPA199"));
     
    //CommandEvent::process(F("HPS9|45"));
 
