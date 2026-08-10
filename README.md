@@ -8,70 +8,96 @@ opened directly in the Arduino IDE.
 
 | Function | Mega UART | Pins | Baud rate |
 | --- | --- | --- | --- |
-| Marcduino commands | `Serial3` | RX3 = 15, TX3 = 14 | 9600 |
-| PSI Pro | `Serial2` | RX2 = 17, TX2 = 16 | 2400 |
+| Direct-command backup | `Serial1` | RX1 = 19, TX1 = 18 | 9600 |
+| PSI Pro | `Serial3` | RX3 = 15, TX3 = 14 | 2400 |
 | USB monitor/debug | `Serial` | USB | 115200 |
 
-The external command sender must be connected **TX sender -> RX3 / pin 15**
-and share GND with the Mega. Do not connect two TX outputs together.
+The normal command route is an I2C gateway based on an Arduino Pro Mini. The
+external command sender is connected to the Pro Mini, not directly to the
+Mega. `Serial1` remains available as a direct wired fallback.
 
-## Serial3 receive fix
+## Serial-to-I2C command gateway
 
-### Symptom
+### Why the gateway is necessary
 
 Marcduino commands such as `:SE00` occasionally arrived as `:SE0` or `:S00`.
 The serial trace proved that the missing character was already absent before
-Marcduino parsed the command. There was no software buffer overflow.
+Marcduino parsed the command. There was no command-buffer overflow.
 
-### Root cause
+On an AVR Mega, WS2812/SK6812 frames can temporarily prevent timely UART
+handling. The FLD has 80 LEDs, the RLD 96 LEDs, and the Holo displays also
+use this timing-sensitive LED protocol. A hardware UART is still the best
+direct connection, but it cannot recover a byte which arrived while the LED
+driver was timing-critical.
 
-`AnimatedEvent::process()` runs the three `HoloLights` instances and the two
-Logic Engine displays. The original `Adafruit_NeoPixel` backend disables AVR
-interrupts while each SK6812/WS2812 LED frame is sent. If this coincides with
-a command byte, the UART can lose a byte. The FLD has 80 LEDs and the RLD has
-96 LEDs, so their frames are particularly long.
+The gateway decouples the two time domains: the Pro Mini receives and buffers
+the complete 9600-baud UART stream, while the Mega fetches buffered bytes over
+I2C when it is available.
 
-This happens even if no LED hardware is connected: the sketch still sends the
-NeoPixel waveform on pins 22, 23 and 24.
+### Architecture
 
-### Implemented solution
+```text
+External sender -- UART 9600 --> Pro Mini -- I2C --> Mega 2560 -- I2C --> PCA9685
+```
 
-The sketch now selects Reeltwo's FastLED backend with
-`FASTLED_ALLOW_INTERRUPTS = 1`. FastLED yields to the UART interrupt during
-the LED output, preferring a repeat of an LED frame over a lost serial byte.
-`processAnimatedEvents()` retains the complete normal event set and runs LED
-frames only after the command UART has been quiet for at least **4 ms**:
+The Mega is the **only I2C master**. It polls the Pro Mini at address `0x12`
+every 2 ms and fetches up to 28 bytes per request. The Pro Mini is an I2C
+slave only and never starts an I2C transfer, so it can safely share the bus
+with the PCA9685.
+
+### Wiring
+
+| Connection | Connect to |
+| --- | --- |
+| Sender TX | Pro Mini D0 / RX |
+| Sender GND | Pro Mini GND and Mega GND |
+| Pro Mini A4 / SDA | Mega SDA (pin 20) and PCA9685 SDA |
+| Pro Mini A5 / SCL | Mega SCL (pin 21) and PCA9685 SCL |
+
+Use a **5 V / 16 MHz Pro Mini**. The existing I2C pull-ups should remain; do
+not add excessive additional pull-ups. Disconnect the sender from Mega RX1
+while it is connected to the Pro Mini. Do not send commands through the I2C
+gateway and direct `Serial1` at the same time.
+
+### Pro Mini firmware
+
+Flash [pro-mini-serial-i2c-gateway.ino](pro-mini-serial-i2c-gateway/pro-mini-serial-i2c-gateway.ino)
+to the Pro Mini using the Arduino IDE:
+
+1. Select **Arduino Pro or Pro Mini**.
+2. Select **ATmega328P, 5 V, 16 MHz**.
+3. Disconnect the external sender from D0/RX during upload.
+4. Upload and reconnect the sender afterwards.
+
+The Mega gateway is enabled by default in `PenumBra-Dome.ino`:
 
 ```cpp
-if ((uint32_t)(micros() - lastComByteMicros) >= 4000UL)
-{
-    frontHolo.animate();
-    rearHolo.animate();
-    topHolo.animate();
-    FLD.animate();
-    RLD.animate();
-}
+#define ENABLE_I2C_COMMAND_GATEWAY 1
+#define I2C_COMMAND_GATEWAY_ADDRESS 0x12
 ```
 
-At 9600 baud, command bytes are about 1 ms apart. Therefore a running command
-postpones only LED-frame updates; all commands, panels, servos, logic displays
-and buttons remain active. After the command, normal LED updates resume
-automatically.
-
-The local Arduino library `Reeltwo` was adapted for this FastLED configuration.
-Its original state is preserved at:
+The startup trace confirms it with:
 
 ```text
-C:\Users\info\Documents\Arduino\libraries\Reeltwo-backup-before-fastled
+SETUP: I2C command gateway enabled
 ```
 
-The Arduino IDE and PlatformIO use the same adapted library from:
+### LED test switches
 
-```text
-C:\Users\info\Documents\Arduino\libraries\Reeltwo
+The current repository state is the LED-free gateway reference test:
+
+```cpp
+#define ENABLE_LOGIC_DISPLAYS 0
+#define ENABLE_HOLO_LEDS 0
 ```
 
-Current tested library combination:
+After the I2C gateway has been verified, set both values to `1` to restore all
+Holo, FLD and RLD outputs. The command receiver itself uses a fixed-size,
+non-blocking buffer rather than `readStringUntil()`.
+
+## LED libraries
+
+The current library combination is:
 
 ```text
 Reeltwo 23.5.7
@@ -79,12 +105,9 @@ FastLED 3.3.2
 Adafruit NeoPixel 1.15.5
 ```
 
-The prior Adafruit NeoPixel 1.1.3 installation is preserved at
-`C:\Users\info\Documents\Arduino\libraries\Adafruit_NeoPixel-backup-1.1.3`.
-
-`readCom()` also uses a fixed-size, non-blocking receive buffer instead of
-`readStringUntil()`. This avoids dynamic `String` allocation and blocking waits
-in the command path.
+`USE_LEDLIB 0` selects ReelTwo's FastLED backend. FastLED 3.10.4 was tested
+but is incompatible with the current AVR/PlatformIO toolchain; FastLED 3.3.2
+is the working version for this project.
 
 ## PlatformIO
 
@@ -140,4 +163,5 @@ to:
 //#define COMMAND_RX_TRACE
 ```
 
-The Serial3 receive fix remains active when the trace is disabled.
+The fixed-size command parser and the optional I2C gateway remain active when
+the trace is disabled.
