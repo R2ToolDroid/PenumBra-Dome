@@ -85,11 +85,11 @@ static uint32_t lastComByteMicros;
 
 //#define COMMAND_SERIAL Serial1 //   Serial1 for LIVE 
 
-#define COM_SERIAL Serial3 //   Serial1 for LIVE 
+#define COM_SERIAL Serial1 //   Serial1 for LIVE 
 
 //#ifdef RECEIVE_MARCDUINO_COMMANDS
 
-#define PSI_COM Serial2 //  serial3 for PSI Pro
+#define PSI_COM Serial3 //  serial3 for PSI Pro
 #define DOME_BTN_L A0
 #define DOME_BTN_R A1
 
