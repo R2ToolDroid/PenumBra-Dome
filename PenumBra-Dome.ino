@@ -2,6 +2,17 @@
 //#define DEBUG_SERIAL Serial 
 //#define USE_HOLO_DEBUG
 
+// Use Reeltwo's FastLED backend. With interrupt support enabled, FastLED
+// yields to the UART ISR instead of blocking it for an entire LED frame.
+#define USE_LEDLIB 0
+#define FASTLED_ALLOW_INTERRUPTS 1
+
+// Temporary isolation test: all FastLED / WS2812 outputs are inactive.
+// The associated objects remain so Marcduino commands and servo sequences
+// continue to compile.
+#define ENABLE_LOGIC_DISPLAYS 0
+#define ENABLE_HOLO_LEDS 0
+
 // Echo fully received Serial1 commands to the USB serial monitor without
 // enabling the verbose Reeltwo debug output.
 #define COMMAND_RX_TRACE
@@ -81,6 +92,9 @@ uint8_t resetFlags __attribute__((section(".noinit")));
 
 #define FRONT_LOGIC_PIN 29
 #define REAR_LOGIC_PIN 28
+// Required by unused clocked FastLED template declarations in this ReelTwo
+// version; the active FLD/RLD boards are one-wire SK6812 devices.
+#define REAR_LOGIC_CLOCK_PIN 30
 
 #include "dome/Logics.h"   //HACK to switch PINs to different Position  FRONT 29 REAR 28 
 //#include "i2c/I2CReceiver.h"
@@ -111,6 +125,14 @@ void printResetCause()
 //#define COMMAND_SERIAL Serial1 //   Serial1 for LIVE 
 
 #define COM_SERIAL Serial1 //   Serial1 for LIVE 
+
+// Optional Serial-to-I2C gateway (Arduino Pro Mini). The Mega stays the only
+// I2C master and polls the Pro Mini, so it can share the bus safely with the
+// PCA9685. Serial1 remains active as a wired fallback; do not transmit on both
+// inputs at the same time.
+#define ENABLE_I2C_COMMAND_GATEWAY 1
+#define I2C_COMMAND_GATEWAY_ADDRESS 0x12
+#define I2C_COMMAND_GATEWAY_CHUNK_SIZE 28
 
 //#ifdef RECEIVE_MARCDUINO_COMMANDS
 
@@ -185,9 +207,13 @@ AnimationPlayer player(servoSequencer);
 
 
 
-HoloLights frontHolo(22,HoloLights::kRGB, HoloLights::kFrontHolo,12);        // PIN Dout1
-HoloLights rearHolo(23, HoloLights::kRGB, HoloLights::kRearHolo);         // PIN Dout2
-HoloLights topHolo(24, HoloLights::kRGB, HoloLights::kTopHolo);          // PIN Dout3
+using FrontHoloLights = HoloLights<22, GRB, 12>;
+using RearHoloLights = HoloLights<23, GRB, 7>;
+using TopHoloLights = HoloLights<24, GRB, 12>;
+
+FrontHoloLights frontHolo(FrontHoloLights::kFrontHolo); // PIN Dout1
+RearHoloLights rearHolo(RearHoloLights::kRearHolo);     // PIN Dout2
+TopHoloLights topHolo(TopHoloLights::kTopHolo);         // PIN Dout3
 
 //HoloDisplay frontHolo(HoloLightHoloLights::kRGBW, HoloLights::kTopHolos::kRGBW, HoloLights::kFrontHolo);
 //HoloLights rearHolo(HP_REAR_LED_PIN, HoloLights::kRGBW, HoloLights::kRearHolo);
@@ -207,62 +233,94 @@ LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault);
 
 //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
 
-// === Command queue for Serial1 (COM_SERIAL) ===
+// === Command queue for Serial1 and the optional I2C gateway ===
+
+static char commandBuffer[96];
+static uint8_t commandLength = 0;
+
+void processComByte(uint8_t received)
+{
+    lastComByteMicros = micros();
+    commandRxDiagnostics.bytes++;
+    if (commandRxDiagnostics.rawCount < sizeof(commandRxDiagnostics.raw))
+        commandRxDiagnostics.raw[commandRxDiagnostics.rawCount++] = received;
+    else
+        commandRxDiagnostics.rawDropped++;
+
+    if (received == '\r' || received == '\n')
+    {
+        if (commandLength == 0)
+            return;
+
+        commandBuffer[commandLength] = '\0';
+        commandRxDiagnostics.lines++;
+#if defined(COMMAND_RX_TRACE)
+        // Do not wait for a full USB TX buffer; receive timing wins over tracing.
+        if (Serial.availableForWrite() >= commandLength + 2)
+        {
+            Serial.write('>');
+            Serial.write(commandBuffer, commandLength);
+            Serial.write('\n');
+        }
+#endif
+#if !defined(SERIAL3_RX_ONLY_TEST)
+        // Keep Marcduino aliases (:SE00, #ON00, ...) and native Reeltwo
+        // commands (HPA..., HPF..., LE..., MP...) available on both inputs.
+        Marcduino::processCommand(player, commandBuffer);
+        CommandEvent::process(commandBuffer);
+#endif
+        commandLength = 0;
+    }
+    else if (commandLength < sizeof(commandBuffer) - 1)
+    {
+        commandBuffer[commandLength++] = static_cast<char>(received);
+    }
+    else
+    {
+        // Discard an oversized command instead of overrunning the buffer.
+        commandRxDiagnostics.lineOverflows++;
+        commandLength = 0;
+    }
+}
+
+void pollI2cCommandGateway()
+{
+#if ENABLE_I2C_COMMAND_GATEWAY
+    static uint32_t lastPollMicros;
+    if ((uint32_t)(micros() - lastPollMicros) < 2000UL)
+        return;
+    lastPollMicros = micros();
+
+    // Response layout: [byte count][up to 28 buffered UART bytes].
+    const uint8_t packetSize = Wire.requestFrom(
+        (uint8_t)I2C_COMMAND_GATEWAY_ADDRESS,
+        (uint8_t)(I2C_COMMAND_GATEWAY_CHUNK_SIZE + 1));
+    if (packetSize == 0 || Wire.available() == 0)
+        return;
+
+    uint8_t byteCount = (uint8_t)Wire.read();
+    if (byteCount > I2C_COMMAND_GATEWAY_CHUNK_SIZE)
+        byteCount = I2C_COMMAND_GATEWAY_CHUNK_SIZE;
+    if (byteCount > packetSize - 1)
+        byteCount = packetSize - 1;
+
+    if (byteCount > commandRxDiagnostics.maxPending)
+        commandRxDiagnostics.maxPending = byteCount;
+    while (byteCount-- != 0 && Wire.available() > 0)
+        processComByte((uint8_t)Wire.read());
+#endif
+}
 
 void readCom()
 {
-    static char data[96];
-    static uint8_t length = 0;
-
     const int pending = COM_SERIAL.available();
     if (pending > commandRxDiagnostics.maxPending)
         commandRxDiagnostics.maxPending = pending;
 
     while (COM_SERIAL.available() > 0)
-    {
-        const int received = COM_SERIAL.read();
-        lastComByteMicros = micros();
-        commandRxDiagnostics.bytes++;
-        if (commandRxDiagnostics.rawCount < sizeof(commandRxDiagnostics.raw))
-            commandRxDiagnostics.raw[commandRxDiagnostics.rawCount++] = received;
-        else
-            commandRxDiagnostics.rawDropped++;
-        if (received == '\r' || received == '\n')
-        {
-            if (length == 0)
-                continue;
+        processComByte((uint8_t)COM_SERIAL.read());
 
-            data[length] = '\0';
-            commandRxDiagnostics.lines++;
-#if defined(COMMAND_RX_TRACE)
-            // Do not wait for a full USB TX buffer; receive timing wins over tracing.
-            if (Serial.availableForWrite() >= length + 2)
-            {
-                Serial.write('>');
-                Serial.write(data, length);
-                Serial.write('\n');
-            }
-#endif
-#if !defined(SERIAL3_RX_ONLY_TEST)
-            // Keep Marcduino aliases (:SE00, #ON00, ...) and native Reeltwo
-            // commands (HPA..., HPF..., LE..., MP...) available on the same
-            // serial input. Non-matching commands are ignored by each layer.
-            Marcduino::processCommand(player, data);
-            CommandEvent::process(data);
-#endif
-            length = 0;
-        }
-        else if (length < sizeof(data) - 1)
-        {
-            data[length++] = static_cast<char>(received);
-        }
-        else
-        {
-            // Discard an oversized command instead of overrunning the buffer.
-            commandRxDiagnostics.lineOverflows++;
-            length = 0;
-        }
-    }
+    pollI2cCommandGateway();
 }
 
 void reportComDiagnostics()
@@ -315,20 +373,35 @@ void sendSerial3Loopback()
 
 void processAnimatedEvents()
 {
-    // These are the non-HoloLights AnimatedEvent instances constructed by this
-    // sketch. They do not use a NeoPixel bitstream.
+    // Keep the original ReelTwo event order for components that do not send
+    // interrupt-sensitive LED frames.
     magicPanel.animate();
+    servoDispatch.animate();
     servoSequencer.animate();
     player.animate();
 
     // Adafruit_NeoPixel::show() temporarily masks AVR interrupts. Do not run
-    // a HoloLights frame while a Serial3 command is being received; at 9600
-    // baud the 4 ms quiet period is longer than the gap between command bytes.
+    // HoloLights or LogicEngine LED frames while a COM command is being
+    // received; at 9600 baud the 4 ms quiet period is longer than the gap
+    // between command bytes.
     if ((uint32_t)(micros() - lastComByteMicros) >= 4000UL)
     {
+        #if ENABLE_HOLO_LEDS
         frontHolo.animate();
         rearHolo.animate();
         topHolo.animate();
+        #endif
+        #if ENABLE_LOGIC_DISPLAYS
+        FLD.animate();
+        RLD.animate();
+        #endif
+
+        // ReelTwo's FastLED LogicEngine path normally schedules this at the
+        // end of AnimatedEvent::process(). Our UART-aware dispatcher replaces
+        // that global call, so complete the shared FastLED frame explicitly.
+        #if ENABLE_HOLO_LEDS || ENABLE_LOGIC_DISPLAYS
+        FastLED.show();
+        #endif
     }
 }
 
@@ -390,17 +463,43 @@ void setup()
 
     SETUP_TRACE("SETUP: Wire.begin");
     Wire.begin();
+#if ENABLE_I2C_COMMAND_GATEWAY
+    SETUP_TRACE("SETUP: I2C command gateway enabled");
+#endif
     SETUP_TRACE("SETUP: COM begin");
 
     COM_SERIAL.begin(9600);
+    SETUP_TRACE("SETUP: COM ready");
     // small timeout for readBytesUntil()
     //COMMAND_SERIAL.setTimeout(20); // ms; tune between 10..50
 
     // Ensure only our poller reads the hardware serial
     //marcduinoSerial.setStream((Stream*)nullptr);
 
-    // Normal Reeltwo setup: initialize every registered setup component.
-    SetupEvent::ready();
+    // Per-device startup trace for the FastLED/ReelTwo update diagnosis.
+    SETUP_TRACE("SETUP: MagicPanel");
+    magicPanel.setup();
+    SETUP_TRACE("SETUP: PCA9685");
+    servoDispatch.setup();
+    #if ENABLE_HOLO_LEDS
+    SETUP_TRACE("SETUP: front holo");
+    frontHolo.setup();
+    SETUP_TRACE("SETUP: rear holo");
+    rearHolo.setup();
+    SETUP_TRACE("SETUP: top holo");
+    topHolo.setup();
+    #else
+    SETUP_TRACE("SETUP: holo LEDs disabled");
+    #endif
+    #if ENABLE_LOGIC_DISPLAYS
+    SETUP_TRACE("SETUP: FLD");
+    FLD.setup();
+    SETUP_TRACE("SETUP: RLD");
+    RLD.setup();
+    #else
+    SETUP_TRACE("SETUP: logic displays disabled");
+    #endif
+    SETUP_TRACE("SETUP: events ready");
     
    // Wire.setClock(400000); //Set i2c frequency to 400 kHz.
 
@@ -411,10 +510,12 @@ void setup()
     //servoDispatch.setServosEasingMethod(HOLO_SERVOS_MASK, Easing::CircularEaseIn);
 
 
+    #if ENABLE_HOLO_LEDS
     frontHolo.assignServos(&servoDispatch, 0, 1);
     topHolo.assignServos(&servoDispatch, 2, 3);
     rearHolo.assignServos(&servoDispatch, 4, 5);
     SETUP_TRACE("SETUP: holos assigned");
+    #endif
   
     PSI_COM.begin(2400);
     SETUP_TRACE("SETUP: PSI serial ready");
@@ -424,8 +525,11 @@ void setup()
 #endif
 
 
-    FLD.selectScrollTextLeft("R2 D2-\n-by Doc", LogicEngineRenderer::kBlue, 1, 5);
-    RLD.selectScrollTextLeft("... RSeries Doc Snyder ....", LogicEngineRenderer::kYellow, 0, 3);
+    // Optional startup scrolls are disabled: on this Mega they can block the
+    // boot sequence before the first event-loop pass. FLD/RLD remain fully
+    // initialized and are controlled normally through LE... commands.
+    // FLD.selectScrollTextLeft("R2 D2-\n-by Doc", LogicEngineRenderer::kBlue, 1, 5);
+    // RLD.selectScrollTextLeft("... RSeries Doc Snyder ....", LogicEngineRenderer::kYellow, 0, 3);
 
     //CommandEvent::process(F("HPF104"));  
     //servoDispatch.moveTo(0, 150, 1000, 1.0);  

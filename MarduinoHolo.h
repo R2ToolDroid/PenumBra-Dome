@@ -34,30 +34,30 @@ MARCDUINO_ACTION(HoloRes, 0, ({
 MARCDUINO_ACTION(HoloTop, 8, ({
 
     // Front Holo Dim cycle random color
-   frontHolo.moveHP(HoloLights::kUp, 500);
+   frontHolo.moveHP(FrontHoloLights::kUp, 500);
    CommandEvent::process(F("HPF007"));  //Short Circuit
 }))
 
 MARCDUINO_ACTION(HoloBottom, 2, ({
     // Front Holo Dim cycle random color
-    frontHolo.moveHP(HoloLights::kDown, 500);
+    frontHolo.moveHP(FrontHoloLights::kDown, 500);
     CommandEvent::process(F("HPF001")); //Leia Sequence Wht blue
 }))
 MARCDUINO_ACTION(HoloRight, 6, ({
     // Front Holo Dim cycle random color
-    frontHolo.moveHP(HoloLights::kRight, 500);
+    frontHolo.moveHP(FrontHoloLights::kRight, 500);
     CommandEvent::process(F("HPF006")); //roll slide
 }))
 MARCDUINO_ACTION(HoloLeft, 4, ({
     // Front Holo Dim cycle random color
-    frontHolo.moveHP(HoloLights::kLeft, 500);
+    frontHolo.moveHP(FrontHoloLights::kLeft, 500);
     CommandEvent::process(F("HPF00308"));  // Pulse mit 8 sec und 0 rnd COlor
     //003CS
 }))
 
 MARCDUINO_ACTION(HoloCenter, 5, ({
     // Front Holo Dim cycle random color
-    frontHolo.moveHP(HoloLights::kCenter, 500);
+    frontHolo.moveHP(FrontHoloLights::kCenter, 500);
 }))
 
 MARCDUINO_ACTION(HoloCen, 7, ({

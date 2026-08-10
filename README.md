@@ -25,21 +25,22 @@ Marcduino parsed the command. There was no software buffer overflow.
 
 ### Root cause
 
-`AnimatedEvent::process()` also runs the three `HoloLights` instances.
-This project uses Reeltwo with `Adafruit_NeoPixel` (`USE_LEDLIB = 1`). A
-NeoPixel `show()` temporarily disables AVR interrupts while its LED frame is
-sent. If this coincides with a command byte on `Serial3`, the UART can lose a
-byte.
+`AnimatedEvent::process()` runs the three `HoloLights` instances and the two
+Logic Engine displays. The original `Adafruit_NeoPixel` backend disables AVR
+interrupts while each SK6812/WS2812 LED frame is sent. If this coincides with
+a command byte, the UART can lose a byte. The FLD has 80 LEDs and the RLD has
+96 LEDs, so their frames are particularly long.
 
 This happens even if no LED hardware is connected: the sketch still sends the
 NeoPixel waveform on pins 22, 23 and 24.
 
 ### Implemented solution
 
-`processAnimatedEvents()` replaces the global `AnimatedEvent::process()` in
-the main loop. It always runs the MagicPanel, servo sequencer and animation
-player. The three HoloLights frames run only after `Serial3` has been quiet for
-at least **4 ms**:
+The sketch now selects Reeltwo's FastLED backend with
+`FASTLED_ALLOW_INTERRUPTS = 1`. FastLED yields to the UART interrupt during
+the LED output, preferring a repeat of an LED frame over a lost serial byte.
+`processAnimatedEvents()` retains the complete normal event set and runs LED
+frames only after the command UART has been quiet for at least **4 ms**:
 
 ```cpp
 if ((uint32_t)(micros() - lastComByteMicros) >= 4000UL)
@@ -47,13 +48,39 @@ if ((uint32_t)(micros() - lastComByteMicros) >= 4000UL)
     frontHolo.animate();
     rearHolo.animate();
     topHolo.animate();
+    FLD.animate();
+    RLD.animate();
 }
 ```
 
 At 9600 baud, command bytes are about 1 ms apart. Therefore a running command
-postpones only the HoloLights update; all commands, panels, servos, logic
-displays and buttons remain active. After the command, normal HoloLights
-updates resume automatically.
+postpones only LED-frame updates; all commands, panels, servos, logic displays
+and buttons remain active. After the command, normal LED updates resume
+automatically.
+
+The local Arduino library `Reeltwo` was adapted for this FastLED configuration.
+Its original state is preserved at:
+
+```text
+C:\Users\info\Documents\Arduino\libraries\Reeltwo-backup-before-fastled
+```
+
+The Arduino IDE and PlatformIO use the same adapted library from:
+
+```text
+C:\Users\info\Documents\Arduino\libraries\Reeltwo
+```
+
+Current tested library combination:
+
+```text
+Reeltwo 23.5.7
+FastLED 3.3.2
+Adafruit NeoPixel 1.15.5
+```
+
+The prior Adafruit NeoPixel 1.1.3 installation is preserved at
+`C:\Users\info\Documents\Arduino\libraries\Adafruit_NeoPixel-backup-1.1.3`.
 
 `readCom()` also uses a fixed-size, non-blocking receive buffer instead of
 `readStringUntil()`. This avoids dynamic `String` allocation and blocking waits
