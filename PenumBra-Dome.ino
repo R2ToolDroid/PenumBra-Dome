@@ -7,11 +7,12 @@
 #define USE_LEDLIB 0
 #define FASTLED_ALLOW_INTERRUPTS 1
 
-// Temporary isolation test: all FastLED / WS2812 outputs are inactive.
-// The associated objects remain so Marcduino commands and servo sequences
-// continue to compile.
-#define ENABLE_LOGIC_DISPLAYS 0
-#define ENABLE_HOLO_LEDS 0
+// Normal runtime configuration. Boot animations stay separately switchable so
+// the command gateway can be verified before any startup sequence is run.
+#define ENABLE_LOGIC_DISPLAYS 1
+#define ENABLE_HOLO_LEDS 1
+#define ENABLE_BOOT_ANIMATIONS 1
+#define ENABLE_LEGACY_BOOT_EFFECTS 1
 
 // Echo fully received Serial1 commands to the USB serial monitor without
 // enabling the verbose Reeltwo debug output.
@@ -39,6 +40,7 @@ struct CommandRxDiagnostics
     uint8_t raw[8] = {};
     uint8_t rawCount = 0;
     uint16_t rawDropped = 0;
+    uint16_t i2cTimeouts = 0;
 };
 
 CommandRxDiagnostics commandRxDiagnostics;
@@ -247,6 +249,16 @@ void processComByte(uint8_t received)
     else
         commandRxDiagnostics.rawDropped++;
 
+    // The gateway may observe a few non-ASCII bytes while the external
+    // sender is powering up. They cannot begin a supported Marcduino or
+    // ReelTwo command; discard them so they cannot consume the command buffer
+    // and cause the first real command after boot to be discarded.
+    if (commandLength == 0 && received != '\r' && received != '\n' &&
+        (received < 0x20 || received > 0x7E))
+    {
+        return;
+    }
+
     if (received == '\r' || received == '\n')
     {
         if (commandLength == 0)
@@ -292,9 +304,16 @@ void pollI2cCommandGateway()
     lastPollMicros = micros();
 
     // Response layout: [byte count][up to 28 buffered UART bytes].
+    Wire.clearWireTimeoutFlag();
     const uint8_t packetSize = Wire.requestFrom(
         (uint8_t)I2C_COMMAND_GATEWAY_ADDRESS,
         (uint8_t)(I2C_COMMAND_GATEWAY_CHUNK_SIZE + 1));
+    if (Wire.getWireTimeoutFlag())
+    {
+        commandRxDiagnostics.i2cTimeouts++;
+        Wire.clearWireTimeoutFlag();
+        return;
+    }
     if (packetSize == 0 || Wire.available() == 0)
         return;
 
@@ -338,6 +357,8 @@ void reportComDiagnostics()
     Serial.print(commandRxDiagnostics.maxPending);
     Serial.print(F(" overflow="));
     Serial.print(commandRxDiagnostics.lineOverflows);
+    Serial.print(F(" i2cTimeout="));
+    Serial.print(commandRxDiagnostics.i2cTimeouts);
     Serial.print(F(" raw="));
     for (uint8_t i = 0; i < commandRxDiagnostics.rawCount; i++)
     {
@@ -463,6 +484,9 @@ void setup()
 
     SETUP_TRACE("SETUP: Wire.begin");
     Wire.begin();
+    // A malformed or disconnected I2C device must not hold the Mega's TWI
+    // hardware forever. Reset only the TWI peripheral after a 10 ms timeout.
+    Wire.setWireTimeout(10000, true);
 #if ENABLE_I2C_COMMAND_GATEWAY
     SETUP_TRACE("SETUP: I2C command gateway enabled");
 #endif
@@ -499,6 +523,7 @@ void setup()
     #else
     SETUP_TRACE("SETUP: logic displays disabled");
     #endif
+    SETUP_TRACE("SETUP: logic stage complete");
     SETUP_TRACE("SETUP: events ready");
     
    // Wire.setClock(400000); //Set i2c frequency to 400 kHz.
@@ -525,22 +550,23 @@ void setup()
 #endif
 
 
-    // Optional startup scrolls are disabled: on this Mega they can block the
-    // boot sequence before the first event-loop pass. FLD/RLD remain fully
-    // initialized and are controlled normally through LE... commands.
-    // FLD.selectScrollTextLeft("R2 D2-\n-by Doc", LogicEngineRenderer::kBlue, 1, 5);
-    // RLD.selectScrollTextLeft("... RSeries Doc Snyder ....", LogicEngineRenderer::kYellow, 0, 3);
+#if ENABLE_LEGACY_BOOT_EFFECTS
+    // Original boot texts from the main branch.
+    FLD.selectScrollTextLeft("R2 D2-\n-by Doc", LogicEngineRenderer::kBlue, 1, 5);
+    RLD.selectScrollTextLeft("... RSeries Doc Snyder ....", LogicEngineRenderer::kYellow, 0, 3);
+#endif
 
     //CommandEvent::process(F("HPF104"));  
     //servoDispatch.moveTo(0, 150, 1000, 1.0);  
     
-    // Do not start the random all-holo twitch during boot. It caused a reset
-    // loop on this Mega configuration. The same HPA199 function remains
-    // available when it is explicitly requested by a command.
-    // CommandEvent::process(F("HPA199"));
+#if ENABLE_LEGACY_BOOT_EFFECTS
+    // Original random all-holo twitch from the main branch.
+    CommandEvent::process(F("HPA199"));
+#endif
     
    //CommandEvent::process(F("HPS9|45"));
 
+#if ENABLE_BOOT_ANIMATIONS
     CommandEvent::process("MP20005");
     SETUP_TRACE("SETUP: magic command");
     //servoDispatch.setServosEasingMethod(ALL_DOME_PANELS_MASK, Easing::BounceEaseOut);
@@ -549,6 +575,10 @@ void setup()
     //servoDispatch.setServosEasingMethod(HOLO_SERVOS_MASK, Easing::CircularEaseIn);
     SEQUENCE_PLAY_ONCE_SPEED(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK, 2000);
     SETUP_TRACE("SETUP: complete");
+#else
+    SETUP_TRACE("SETUP: boot animations disabled");
+    SETUP_TRACE("SETUP: complete");
+#endif
 
     //PSI_COM.print("0T2\r");
 

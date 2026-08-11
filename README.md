@@ -12,8 +12,8 @@ opened directly in the Arduino IDE.
 | PSI Pro | `Serial3` | RX3 = 15, TX3 = 14 | 2400 |
 | USB monitor/debug | `Serial` | USB | 115200 |
 
-The normal command route is an I2C gateway based on an Arduino Pro Mini. The
-external command sender is connected to the Pro Mini, not directly to the
+The normal command route is an I2C gateway based on an Arduino Pro Micro. The
+external command sender is connected to the Pro Micro, not directly to the
 Mega. `Serial1` remains available as a direct wired fallback.
 
 ## Serial-to-I2C command gateway
@@ -30,18 +30,18 @@ use this timing-sensitive LED protocol. A hardware UART is still the best
 direct connection, but it cannot recover a byte which arrived while the LED
 driver was timing-critical.
 
-The gateway decouples the two time domains: the Pro Mini receives and buffers
+The gateway decouples the two time domains: the Pro Micro receives and buffers
 the complete 9600-baud UART stream, while the Mega fetches buffered bytes over
 I2C when it is available.
 
 ### Architecture
 
 ```text
-External sender -- UART 9600 --> Pro Mini -- I2C --> Mega 2560 -- I2C --> PCA9685
+External sender -- UART 9600 --> Pro Micro -- I2C --> Mega 2560 -- I2C --> PCA9685
 ```
 
-The Mega is the **only I2C master**. It polls the Pro Mini at address `0x12`
-every 2 ms and fetches up to 28 bytes per request. The Pro Mini is an I2C
+The Mega is the **only I2C master**. It polls the Pro Micro at address `0x12`
+every 2 ms and fetches up to 28 bytes per request. The Pro Micro is an I2C
 slave only and never starts an I2C transfer, so it can safely share the bus
 with the PCA9685.
 
@@ -49,25 +49,26 @@ with the PCA9685.
 
 | Connection | Connect to |
 | --- | --- |
-| Sender TX | Pro Mini D0 / RX |
-| Sender GND | Pro Mini GND and Mega GND |
-| Pro Mini A4 / SDA | Mega SDA (pin 20) and PCA9685 SDA |
-| Pro Mini A5 / SCL | Mega SCL (pin 21) and PCA9685 SCL |
+| Sender TX | Pro Micro D0 / RX1 |
+| Sender GND | Pro Micro GND and Mega GND |
+| Pro Micro D2 / SDA | Mega SDA (pin 20) and PCA9685 SDA |
+| Pro Micro D3 / SCL | Mega SCL (pin 21) and PCA9685 SCL |
 
-Use a **5 V / 16 MHz Pro Mini**. The existing I2C pull-ups should remain; do
+Use a **5 V / 16 MHz Pro Micro**. The existing I2C pull-ups should remain; do
 not add excessive additional pull-ups. Disconnect the sender from Mega RX1
-while it is connected to the Pro Mini. Do not send commands through the I2C
+while it is connected to the Pro Micro. Do not send commands through the I2C
 gateway and direct `Serial1` at the same time.
 
-### Pro Mini firmware
+### Pro Micro firmware
 
-Flash [pro-mini-serial-i2c-gateway.ino](pro-mini-serial-i2c-gateway/pro-mini-serial-i2c-gateway.ino)
-to the Pro Mini using the Arduino IDE:
+Flash [pro-micro-serial-i2c-gateway.ino](pro-micro-serial-i2c-gateway/pro-micro-serial-i2c-gateway.ino)
+to the Pro Micro using the Arduino IDE:
 
-1. Select **Arduino Pro or Pro Mini**.
-2. Select **ATmega328P, 5 V, 16 MHz**.
-3. Disconnect the external sender from D0/RX during upload.
-4. Upload and reconnect the sender afterwards.
+1. Select **Arduino Micro** (or the matching Pro Micro board profile).
+2. The board is **ATmega32U4, 5 V, 16 MHz**.
+3. Upload through the Pro Micro's native USB port.
+4. Sender UART uses `Serial1` on D0/RX1, so it does not share the USB serial
+   interface used for upload.
 
 The Mega gateway is enabled by default in `PenumBra-Dome.ino`:
 
@@ -82,17 +83,20 @@ The startup trace confirms it with:
 SETUP: I2C command gateway enabled
 ```
 
-### LED test switches
+### Runtime switches
 
-The current repository state is the LED-free gateway reference test:
+The current repository state enables all outputs and startup animations:
 
 ```cpp
-#define ENABLE_LOGIC_DISPLAYS 0
-#define ENABLE_HOLO_LEDS 0
+#define ENABLE_LOGIC_DISPLAYS 1
+#define ENABLE_HOLO_LEDS 1
+#define ENABLE_BOOT_ANIMATIONS 1
+#define ENABLE_LEGACY_BOOT_EFFECTS 1
 ```
 
-After the I2C gateway has been verified, set both values to `1` to restore all
-Holo, FLD and RLD outputs. The command receiver itself uses a fixed-size,
+Set individual values to `0` only for isolated hardware diagnostics. The
+`ENABLE_LEGACY_BOOT_EFFECTS` switch restores the original FLD/RLD boot texts
+and the `HPA199` Holo twitch. The command receiver itself uses a fixed-size,
 non-blocking buffer rather than `readStringUntil()`.
 
 ## LED libraries
