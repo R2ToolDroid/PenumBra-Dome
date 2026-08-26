@@ -1,0 +1,136 @@
+Kategorie;Komando;Funktionsbeschreibung;Hinweis
+Magic Panel;*MF00;Magic Panel ausschalten;
+Magic Panel;*MF01;Magic Panel Dauerlicht;5 Sekunden
+Magic Panel;*MF02;Magic Panel Toggle;5 Sekunden
+Magic Panel;*MF03;Magic Panel Flash;5 Sekunden
+Magic Panel;*MF04;Magic Panel Alarm;5 Sekunden
+Magic Panel;*MF05;Magic Panel horizontaler Scan;5 Sekunden
+Magic Panel;*MF06;Magic Panel vertikaler Scan;5 Sekunden
+Magic Panel;*MF07;Magic Panel Game of Life;
+Magic Panel;*MF08;Magic Panel Expand Solid;5 Sekunden
+Magic Panel;*MF09;Magic Panel Collapse Solid;5 Sekunden
+Magic Panel;*MF10;Magic Panel Expand Hollow;5 Sekunden
+Magic Panel;*MF11;Magic Panel Collapse Hollow;5 Sekunden
+Magic Panel;*MF12;Magic Panel Forward Q;5 Sekunden
+Magic Panel;*MF13;Magic Panel Reverse Q;5 Sekunden
+Magic Panel;*MF14;Magic Panel Cistercian;5 Sekunden
+Panels;:CL00;Alle Dome-Panels schließen;
+Panels;:OP00;Alle Dome-Panels öffnen;
+Panels;:OF00;Alle Dome-Panels flattern lassen;Nicht mit *OF00 verwechseln
+Panels;:OP01;Panel-Gruppe 1 öffnen;
+Panels;:OP02;Panel-Gruppe 2 öffnen;
+Panels;:OP03;Panel-Gruppe 3 öffnen;
+Panels;:OP04;Panel-Gruppe 4 öffnen;
+Panels;:OP05;Panel-Gruppe 5 öffnen;
+Panels;:OP06;Panel-Gruppe 6 öffnen;
+Panels;:OP07;Panel-Gruppe 7 öffnen;
+Panels;:OP08;Panel-Gruppe 8 öffnen;
+Panels;:OP09;Panel-Gruppe 9 öffnen;
+Panels;:OP10;Panel-Gruppe 10 öffnen;
+Panels;:OP11;Obere Pie-Panels öffnen;
+Panels;:OP12;Untere Dome-Panels öffnen;
+Panels;:CL01;Panel-Gruppe 1 schließen;
+Panels;:CL02;Panel-Gruppe 2 schließen;
+Panels;:CL03;Panel-Gruppe 3 schließen;
+Panels;:CL04;Panel-Gruppe 4 schließen;
+Panels;:CL05;Panel-Gruppe 5 schließen;
+Panels;:CL06;Panel-Gruppe 6 schließen;
+Panels;:CL07;Panel-Gruppe 7 schließen;
+Panels;:CL08;Panel-Gruppe 8 schließen;
+Panels;:CL09;Panel-Gruppe 9 schließen;
+Panels;:CL10;Panel-Gruppe 10 schließen;
+Panels;:CL11;Obere Pie-Panels schließen;
+Panels;:CL12;Untere Dome-Panels schließen;
+Panels;:OF01;Panel-Gruppe 1 flattern lassen;
+Panels;:OF02;Panel-Gruppe 2 flattern lassen;
+Panels;:OF03;Panel-Gruppe 3 flattern lassen;
+Panels;:OF04;Panel-Gruppe 4 flattern lassen;
+Panels;:OF05;Panel-Gruppe 5 flattern lassen;
+Panels;:OF06;Panel-Gruppe 6 flattern lassen;
+Panels;:OF07;Panel-Gruppe 7 flattern lassen;
+Panels;:OF08;Panel-Gruppe 8 flattern lassen;
+Panels;:OF09;Panel-Gruppe 9 flattern lassen;
+Panels;:OF10;Panel-Gruppe 10 flattern lassen;
+Holo numerisch;0;Sequenz zurücksetzen und Holos ausschalten;
+Holo numerisch;1;Vorderes Holo weißer Puls;
+Holo numerisch;2;Vorderes Holo nach unten mit Leia-Effekt;
+Holo numerisch;4;Vorderes Holo nach links mit Puls-Effekt;
+Holo numerisch;5;Vorderes Holo zentrieren;
+Holo numerisch;6;Vorderes Holo nach rechts mit Rainbow-Effekt;
+Holo numerisch;7;Vorderes Holo nicken lassen;
+Holo numerisch;8;Vorderes Holo nach oben mit Kurzschluss-Effekt;
+Holo Ein/Aus;*ON00;Alle Holos einschalten;
+Holo Ein/Aus;*ON01;Vorderes Holo einschalten;
+Holo Ein/Aus;*ON02;Hinteres Holo einschalten;
+Holo Ein/Aus;*ON03;Oberes Holo einschalten;
+Holo Ein/Aus;*OF00;Alle Holos ausschalten;Nicht mit :OF00 verwechseln
+Holo Ein/Aus;*OF01;Vorderes Holo ausschalten;
+Holo Ein/Aus;*OF02;Hinteres Holo ausschalten;
+Holo Ein/Aus;*OF03;Oberes Holo ausschalten;
+Holo Ein/Aus;*ST00;Alle Holos zurücksetzen/ausschalten;
+Holo Effekte;*HPS300;Alle Holos Puls-Effekt;
+Holo Effekte;*HPS301;Vorderes Holo Puls-Effekt;
+Holo Effekte;*HPS302;Hinteres Holo Puls-Effekt;
+Holo Effekte;*HPS303;Oberes Holo Puls-Effekt;
+Holo Effekte;*HPS601;Vorderes Holo Rainbow-Effekt;
+Holo Effekte;*HPS602;Hinteres Holo Rainbow-Effekt;
+Holo Effekte;*HPS603;Oberes Holo Rainbow-Effekt;
+Holo Bewegung;*HW01;Vorderes Holo fünfmal links/rechts bewegen;
+Holo Bewegung;*HW02;Hinteres Holo fünfmal links/rechts bewegen;
+Holo Bewegung;*HW03;Oberes Holo fünfmal links/rechts bewegen;
+Holo Bewegung;*HN01;Vorderes Holo fünfmal auf/ab bewegen;
+Holo Bewegung;*HN02;Hinteres Holo fünfmal auf/ab bewegen;
+Holo Bewegung;*HN03;Oberes Holo fünfmal auf/ab bewegen;
+Holo Position;*HP001;Vorderes Holo nach unten;
+Holo Position;*HP101;Vorderes Holo zentrieren;
+Holo Position;*HP201;Vorderes Holo nach oben;
+Holo Position;*HP301;Vorderes Holo nach links;
+Holo Position;*HP401;Vorderes Holo nach oben-links;
+Holo Position;*HP501;Vorderes Holo nach unten-links;
+Holo Position;*HP601;Vorderes Holo nach rechts;
+Holo Position;*HP701;Vorderes Holo nach oben-rechts;
+Holo Position;*HP801;Vorderes Holo nach unten-rechts;
+Holo Position;*HP002;Hinteres Holo nach unten;
+Holo Position;*HP102;Hinteres Holo zentrieren;
+Holo Position;*HP202;Hinteres Holo nach oben;
+Holo Position;*HP302;Hinteres Holo nach links;
+Holo Position;*HP402;Hinteres Holo nach oben-links;
+Holo Position;*HP502;Hinteres Holo nach unten-links;
+Holo Position;*HP602;Hinteres Holo nach rechts;
+Holo Position;*HP702;Hinteres Holo nach oben-rechts;
+Holo Position;*HP802;Hinteres Holo nach unten-rechts;
+Holo Position;*HP003;Oberes Holo nach unten;
+Holo Position;*HP103;Oberes Holo zentrieren;
+Holo Position;*HP203;Oberes Holo nach oben;
+Holo Position;*HP303;Oberes Holo nach links;
+Holo Position;*HP403;Oberes Holo nach oben-links;
+Holo Position;*HP503;Oberes Holo nach unten-links;
+Holo Position;*HP603;Oberes Holo nach rechts;
+Holo Position;*HP703;Oberes Holo nach oben-rechts;
+Holo Position;*HP803;Oberes Holo nach unten-rechts;
+Sequenz;:SE00;Aktive Sequenz stoppen und zurücksetzen;
+Sequenz;:SE01;Scream mit Panels Holos Logic und PSI;
+Sequenz;:SE02;Wave-Sequenz;
+Sequenz;:SE03;Smirk-Wave-Sequenz;
+Sequenz;:SE04;Erweiterte Wave-Sequenz;
+Sequenz;:SE05;Beep-Cantina-Sequenz;
+Sequenz;:SE06;Kurzschluss-Sequenz;
+Sequenz;:SE07;Cantina-Tanz-Sequenz;
+Sequenz;:SE08;Leia-Nachricht;
+Sequenz;:SE09;Disco-Sequenz;
+Sequenz;:SE10;Aktive Sequenz stoppen und zurücksetzen;
+Sequenz;:SE11;Full-Awake-Sequenz;
+Sequenz;:SE13;Aktive Sequenz stoppen und zurücksetzen;
+Sequenz;:SE14;Awake-Plus-Sequenz;
+Sequenz;:SE15;Scream ohne Panelbewegung;
+Sequenz;:SE51;Scream mit flatternden Panels;
+Sequenz;:SE52;Wave-One-Sequenz;
+Sequenz;:SE53;Fast-Smirk-Sequenz;
+Sequenz;:SE54;Wave-Two-Sequenz;
+Sequenz;:SE55;Marching-Ants-Sequenz;Doppelt registriert mit Faint-Short-Sequenz
+Sequenz;:SE57;Rhythmische Cantina-Sequenz;
+Sequenz;*RND;Zufällige Holo-Bewegungssequenz;
+Konflikt;*RD00;Alle Holos zufällig bewegen;Zusätzlich als Kurzsequenz doppelt registriert
+Konflikt;*RD01;Vorderes Holo zufällig bewegen;Zusätzlich als Kurzsequenz doppelt registriert
+Holo Bewegung;*RD02;Hinteres Holo zufällig bewegen;
+Holo Bewegung;*RD03;Oberes Holo zufällig bewegen;
