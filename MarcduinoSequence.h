@@ -519,7 +519,7 @@ MARCDUINO_ANIMATION (MarchingAntsSequence, :SE55){
     DO_END()
 }
 
-MARCDUINO_ANIMATION(FaintShortSequence, :SE55)
+MARCDUINO_ANIMATION(FaintShortSequence, :SE56)
 {
     DO_START()
     DO_ONCE({

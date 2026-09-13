@@ -125,7 +125,7 @@ MARCDUINO_ACTION(ResetAllHolos, *ST00, ({
     CommandEvent::process(F("HPA0000"));
 }))
 
-MARCDUINO_ACTION(AllHoloRandomMove, *RD00, ({
+MARCDUINO_ACTION(AllHoloRandomMove, *RD100, ({
     // Front Holo Move Random
     CommandEvent::process(F("HPA199"));
     
@@ -133,7 +133,7 @@ MARCDUINO_ACTION(AllHoloRandomMove, *RD00, ({
 
 ////////////////
 
-MARCDUINO_ACTION(FrontHoloRandomMove, *RD01, ({
+MARCDUINO_ACTION(FrontHoloRandomMove, *RD101, ({
     // Front Holo Move Random
     CommandEvent::process(F("HPF199"));
     
