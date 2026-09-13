@@ -23,7 +23,7 @@ void MakeCommand(int row, int col){
                 
                 DEBUG_PRINTLN("PSI ?"); 
                 PSI_COM.print("0T1\r");
-                SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
+                PLAY_PANEL_SOFT_CLOSE(SeqPanelAllClose, ALL_DOME_PANELS_MASK);
 
                 
                 break;

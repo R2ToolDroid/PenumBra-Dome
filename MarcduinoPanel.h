@@ -3,7 +3,7 @@
 MARCDUINO_ACTION(CloseAllPanels, :CL00, ({
     //Marcduino::processCommand(player, "@4S3");
     //servoDispatch.setServosEasingMethod(HOLO_SERVOS_MASK, Easing::CircularEaseIn);
-    SEQUENCE_PLAY_ONCE_SPEED(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK, 1000);
+    PLAY_PANEL_SOFT_CLOSE(SeqPanelAllClose, ALL_DOME_PANELS_MASK);
     //FLD.selectScrollTextLeft("R2\n D2", LogicEngineRenderer::kBlue, 1, 15);
     //Serial.print("-CL00");
     Serial.println("-CL00"); 
@@ -102,73 +102,73 @@ MARCDUINO_ACTION(OpenBottomPanels, :OP12, ({
 
 
 MARCDUINO_ACTION(ClosePanelGroup1, :CL01, ({
-    SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, PANEL_GROUP_1);
+    PLAY_PANEL_SOFT_CLOSE(SeqPanelAllClose, PANEL_GROUP_1);
 }))
 
 ////////////////
 
 MARCDUINO_ACTION(ClosePanelGroup2, :CL02, ({
-    SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, PANEL_GROUP_2);
+    PLAY_PANEL_SOFT_CLOSE(SeqPanelAllClose, PANEL_GROUP_2);
 }))
 
 ////////////////
 
 MARCDUINO_ACTION(ClosePanelGroup3, :CL03, ({
-    SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, PANEL_GROUP_3);
+    PLAY_PANEL_SOFT_CLOSE(SeqPanelAllClose, PANEL_GROUP_3);
 }))
 
 ////////////////
 
 MARCDUINO_ACTION(ClosePanelGroup4, :CL04, ({
-    SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, PANEL_GROUP_4);
+    PLAY_PANEL_SOFT_CLOSE(SeqPanelAllClose, PANEL_GROUP_4);
 }))
 
 ////////////////
 
 MARCDUINO_ACTION(ClosePanelGroup5, :CL05, ({
-    SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, PANEL_GROUP_5);
+    PLAY_PANEL_SOFT_CLOSE(SeqPanelAllClose, PANEL_GROUP_5);
 }))
 
 ////////////////
 
 MARCDUINO_ACTION(ClosePanelGroup6, :CL06, ({
-    SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, PANEL_GROUP_6);
+    PLAY_PANEL_SOFT_CLOSE(SeqPanelAllClose, PANEL_GROUP_6);
 }))
 
 ////////////////
 
 MARCDUINO_ACTION(ClosePanelGroup7, :CL07, ({
-    SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, PANEL_GROUP_7);
+    PLAY_PANEL_SOFT_CLOSE(SeqPanelAllClose, PANEL_GROUP_7);
 }))
 
 ////////////////
 
 MARCDUINO_ACTION(ClosePanelGroup8, :CL08, ({
-    SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, PANEL_GROUP_8);
+    PLAY_PANEL_SOFT_CLOSE(SeqPanelAllClose, PANEL_GROUP_8);
 }))
 
 ////////////////
 
 MARCDUINO_ACTION(ClosePanelGroup9, :CL09, ({
-    SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, PANEL_GROUP_9);
+    PLAY_PANEL_SOFT_CLOSE(SeqPanelAllClose, PANEL_GROUP_9);
 }))
 
 ////////////////
 
 MARCDUINO_ACTION(ClosePanelGroup10, :CL10, ({
-    SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, PANEL_GROUP_10);
+    PLAY_PANEL_SOFT_CLOSE(SeqPanelAllClose, PANEL_GROUP_10);
 }))
 
 ////////////////
 
 MARCDUINO_ACTION(CloseTopPanels, :CL11, ({
-    SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, PIE_PANEL);
+    PLAY_PANEL_SOFT_CLOSE(SeqPanelAllClose, PIE_PANEL);
 }))
 
 ////////////////
 
 MARCDUINO_ACTION(CloseBottomPanels, :CL12, ({
-    SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, DOME_PANELS_MASK);
+    PLAY_PANEL_SOFT_CLOSE(SeqPanelAllClose, DOME_PANELS_MASK);
 }))
 
 ////////////////

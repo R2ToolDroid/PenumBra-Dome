@@ -40,6 +40,7 @@
 #include "core/Animation.h"
 #include "core/DelayCall.h"
 #include "ServoDispatchPCA9685.h"
+#include "ServoEasing.h"
 #include "ServoSequencer.h"
 #include "core/Marcduino.h"
 
@@ -124,6 +125,26 @@ ServoDispatchPCA9685<SizeOfArray(servoSettings)> servoDispatch(servoSettings);
 ServoSequencer servoSequencer(servoDispatch);
 AnimationPlayer player(servoSequencer);
 
+// All panel movements use a defined time and a gentle approach to their end
+// position.  The PCA9685 dispatcher then switches the PWM output off once the
+// move is complete, so the servos do not continue to draw holding current.
+static const uint16_t kPanelSoftCloseDurationMS = 2000;
+
+#define PLAY_PANEL_SOFT_CLOSE(sequence, groupMask) \
+    SEQUENCE_PLAY_ONCE_VARSPEED_EASING(servoSequencer, sequence, groupMask, \
+        kPanelSoftCloseDurationMS, kPanelSoftCloseDurationMS, \
+        Easing::LinearInterpolation, Easing::CubicEaseOut)
+
+#define PLAY_PANEL_SOFT_CLOSE_VARSPEED(sequence, groupMask, minSpeed, maxSpeed) \
+    SEQUENCE_PLAY_ONCE_VARSPEED_EASING(servoSequencer, sequence, groupMask, \
+        minSpeed, maxSpeed, Easing::LinearInterpolation, Easing::CubicEaseOut)
+
+#define DO_PANEL_SOFT_CLOSE(sequence, groupMask) DO_CASE() { \
+    PLAY_PANEL_SOFT_CLOSE(sequence, groupMask); return true; }
+
+#define DO_PANEL_SOFT_CLOSE_VARSPEED(sequence, groupMask, minSpeed, maxSpeed) DO_CASE() { \
+    PLAY_PANEL_SOFT_CLOSE_VARSPEED(sequence, groupMask, minSpeed, maxSpeed); return true; }
+
 MarcduinoSerial<> marcduinoSerial(COMMAND_SERIAL, player);
 
 
@@ -153,7 +174,7 @@ LogicEngineDeathStarRLDInverted<> RLD(LogicEngineRLDDefault);
 void resetSequence()
 {
    player.end();
-   SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
+   PLAY_PANEL_SOFT_CLOSE(SeqPanelAllClose, ALL_DOME_PANELS_MASK);
 
    //servoDispatch.setServosEasingMethod(HOLO_SERVOS_MASK, Easing::CircularEaseIn);
    // SEQUENCE_PLAY_ONCE_SPEED(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK, 1000);
@@ -227,7 +248,7 @@ void setup()
     //SEQUENCE_PLAY_ONCE(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK);
 
     //servoDispatch.setServosEasingMethod(HOLO_SERVOS_MASK, Easing::CircularEaseIn);
-    SEQUENCE_PLAY_ONCE_SPEED(servoSequencer, SeqPanelAllClose, ALL_DOME_PANELS_MASK, 2000);
+    PLAY_PANEL_SOFT_CLOSE(SeqPanelAllClose, ALL_DOME_PANELS_MASK);
 
     //PSI_COM.print("0T2\r");
 
