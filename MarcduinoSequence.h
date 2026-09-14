@@ -5,6 +5,12 @@ MARCDUINO_ACTION(StopSequence, :SE00, ({
         resetSequence();
 }))
 
+MARCDUINO_ACTION(LoveSequence, :love, ({   
+        
+        PSI_COM.print("0T7\r");
+}))
+
+
 MARCDUINO_ACTION(Mode0Sequence, mode0, ({   
         RLD.selectScrollTextLeft("... R2 in Mode 0 Random.", LogicEngineRenderer::kBlue, 0, 15);
         FLD.selectScrollTextLeft("MOD 0", LogicEngineRenderer::kBlue, 1, 15);
@@ -519,7 +525,7 @@ MARCDUINO_ANIMATION (MarchingAntsSequence, :SE55){
     DO_END()
 }
 
-MARCDUINO_ANIMATION(FaintShortSequence, :SE55)
+MARCDUINO_ANIMATION(FaintShortSequence, :SE56)
 {
     DO_START()
     DO_ONCE({
